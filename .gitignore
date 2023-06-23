@@ -1,0 +1,24 @@
+# Swap files
+*~
+~*
+*swp
+*.kate*
+
+
+# From Tools, etc. 
+*.orig
+
+# IDE
+*.code-workspace
+
+# Directories 
+test/
+secrets/
+log/
+scratch/
+ref/
+
+
+
+
+

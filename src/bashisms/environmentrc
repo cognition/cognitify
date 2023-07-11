@@ -18,42 +18,22 @@ export HISTFILESIZE=20000
 export HISTCONTROL=ignoreboth:erasedups
 export HISTTIMEFORMAT="%Y %h %d %H:%M:%S  "
 
-
-
 export LIBGL_ALWAYS_INDIRECT=1
 
 if [[ -x /usr/bin/nvim ]]; then
     export EDITOR=/usr/bin/${EDITOR:=nvim}
-fi 
+fi
 ##########################         EXPORTS          ########################
 
-export PATH_BASE=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
-
-if [[ -d /usr/games ]]; then 
-    export PATH_GAMES=":/usr/games"
-fi 
-
-if [[ -d /usr/local/games ]]; then 
-    export PATH_GAMES_LOCAL=":/usr/local/games"
-fi 
-
-if [[ -d /opt/bin ]]; then 
-    export PATH_OPT=":/opt/bin"
-fi 
-
-if [[ -x /usr/bin/snap ]]; then
-    export PATH_SNAP=":/snap/bin"
-fi
-
-if [[ -d "${HOME}"/.bin ]] ; then 
-	export PATH_HOME=":${HOME}/.bin"
-fi 
-
-
 if [[ ${UID} -gt 999 ]]; then
-    export PATH="${PATH_BASE}${PATH_GAMES}${PATH_GAMES_LOCAL}${PATH_OPT}${PATH_SNAP}${PATH_HOME}"
+    export PATH=${HOME}/.bin
+    export PATH=${PATH}:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/opt/bin
 else
     # Root or System User
-    export PATH="${PATH_BASE}"
+    export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+fi
+
+if [[ -x /usr/bin/snap ]]; then
+    export PATH=${PATH}:/snap/bin
 fi
 

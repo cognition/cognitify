@@ -54,8 +54,7 @@ function append-etc-bashrc() {
 ## Add auto execute of bashrc 
 if test -e /etc/bash.bashrc ; then
     THERE=$(grep -F 'Cognitify' /etc/bash.bashrc )
-    
-    if test -z "${THERE}" ; then 
+    if test -z "$(grep -F 'Cognitify' /etc/bash.bashrc )" ; then 
         echo "exists" 
         echo "$THERE"
         # cat >> /etc/bash.bashrc << EOF 

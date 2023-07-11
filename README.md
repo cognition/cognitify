@@ -1,6 +1,7 @@
 # Cognitify
 
-## Linux Configuration
+## Linux Configuration and Customisation
+
 
 
 

@@ -1,0 +1,8 @@
+# ShellCheck Config File
+shell=bash
+color=always
+
+
+disable=1091,1090,2166
+external-sources=true
+check-sources=true

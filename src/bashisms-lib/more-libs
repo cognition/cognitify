@@ -1,0 +1,10 @@
+#!/bin/bash
+
+export FUNCTIONS_VERSION=1
+
+## (C) 2023
+## Ramon Brooker <rbrooker@aeo3.io>
+
+# shellcheck source=/dev/null
+
+# [TODO] add more library functions to this file

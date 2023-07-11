@@ -1,0 +1,96 @@
+#!/bin/bash
+
+export ADMIN_FUNCTIONS_VERSION=1
+
+## (C) 2023
+## Ramon Brooker <rbrooker@aeo3.io>
+
+## Source itself to use functions from within all the way through the file
+# source admin-functions
+
+#[DOC] Fix Hostname and Domain
+function update-hostname() {
+
+    if [[ ${1} = "" ]] || [[ ${2} = "" ]]; then
+        echo "command expects Input : "
+        echo "$ update-hostname HOSTNAME DOMAIN "
+        exit 1
+    else
+        HOSTNAME=$1
+        DOMAIN=$2
+
+        sudo hostnamectl --pretty "${HOSTNAME}"
+        sudo hostnamectl --host "${HOSTNAME}"."${DOMAIN}"
+        sudo sh -c 'echo "${HOSTNAME}.${DOMAIN}" >/etc/hostname'
+        get-system-ips
+    fi
+}
+
+# [FIX] Hostnames are not all accounted for and some do not match to the system ips
+#[DOC] prints to screen all associated ips
+function get-system-ips() {
+    LOCAL_IPS=$(hostname -I)
+    for ip in $LOCAL_IPS; do
+        printf "%s\t%s\t%s\n" "${ip}" "${HOSTNAME}.${DOMAIN}" "${HOSTNAME}" >>tmp
+    done
+    echo ""
+    cat tmp | sort
+    rm tmp
+
+}
+
+#[DOC] Adds Environment Variables
+function add-environment-tag() {
+    if [[ ${1} = "" ]] || [[ ${2} = "" ]]; then
+        echo "command expects Input : "
+        echo "$ add-label-tag LABEL VALUE "
+    else
+        sudo sh -c 'echo "export $1=$2" >>/etc/environment'
+    fi
+}
+
+
+function append-etc-bashrc() {
+## Add auto execute of bashrc 
+if test -e /etc/bash.bashrc ; then
+    THERE=$(grep -F 'Cognitify' /etc/bash.bashrc )
+    
+    if test -z "${THERE}" ; then 
+        echo "exists" 
+        echo "$THERE"
+        # cat >> /etc/bash.bashrc << EOF 
+# ## Added by Cognitify (5 lines) 
+# if test -e ~/.bashrc ; then 
+#         source ~/.bashrc 
+# fi 
+# ##
+# EOF
+    else 
+        echo "${THERE}"
+    fi 
+
+fi 
+}
+
+function user-exists() {
+    if test -n "${1}" ; then 
+        USER_NAME=${1}
+    else 
+        echo "function requires input"
+        exit 1    
+    fi   
+    echo "USER_NAME: ${USER_NAME}"
+
+}
+
+## Sudo Passwordless 
+function make-user-passwordless() {
+    if test -n "${1}" ; then 
+        THE_SUDER="${1}"
+        
+    fi 
+
+    echo ""${THE_USER}"     ALL=(ALL:ALL)   NOPASSWD: ALL " > /etc/sudoers.d/"${THE_USER}" 
+    # test 
+    sudo ls  
+}

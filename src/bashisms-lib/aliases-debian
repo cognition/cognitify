@@ -1,0 +1,17 @@
+#!/bin/bash
+
+## (C) 2023
+## Ramon Brooker <rbrooker@aeo3.io>
+
+# shellcheck source=/dev/null  
+
+## Debian Family  (Debian, Ubuntu, Mint, Kali)
+
+## Apt 
+
+alias aptup='sudo apt-get update'
+alias aptupgrade='sudo apt-get update && sudo apt-get upgrade -y'
+alias asearch='sudo apt-get update; sudo apt-cache search '
+alias aptin='sudo apt-get install '
+complete -F _minimal asearch
+complete -F _minimal aptin

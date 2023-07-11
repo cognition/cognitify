@@ -1,0 +1,74 @@
+#!/bin/bash
+
+export CONTAINER_FUNCTIONS_VERSION=1
+
+## (C) 2023
+## Ramon Brooker <rbrooker@aeo3.io>
+
+# ------------------------------------------ #
+### Docker
+
+function docker-list-types() {
+    if TYPES="${1}" ; then 
+        local -a CONTAINER_HASHES
+        mapfile -t CONTAINER_HASHES < <(docker images | grep "${TYPES}" | awk '{print $3}')        
+        echo "${CONTAINER_HASHES[@]}"
+    else 
+        echo "function requires a param, like a, <none>, Exited, etc.. "
+    fi 
+}
+
+
+
+#[DOC] Gets rid of old docker builds
+function docker-cleanup-old-builds() {
+    local -a CONTAINER_HASHES
+    mapfile -t CONTAINER_HASHES < <(docker-list-types '<none>')
+    for hsh in "${CONTAINER_HASHES[@]}"; do
+        docker rmi "${hsh}"
+    done
+}
+
+
+
+#[DOC] Deletes exited containers
+function docker-cleanup-containers() {
+    local -a CONTAINER_HASHES
+    mapfile -t CONTAINER_HASHES < <(docker ps -a | grep 'Exited' | awk '{print $1}')
+    for hsh in "${CONTAINER_HASHES[@]}"; do
+        docker rm "${hsh}"
+    done
+}
+
+#[DOC] Enters a docker container with a bash shell
+function shell-into-docker() {
+    docker exec -it "${1}" /bin/bash
+}
+
+# ------------------------------------------ #
+###  Podman
+
+#[DOC]  Gets rid of old podman builds
+function podman-cleanup-old-builds() {
+    local -a CONTAINER_HASHES
+    mapfile -t CONTAINER_HASHES < <(podman images | grep '<none>' | awk '{print $3}')
+    for hsh in "${CONTAINER_HASHES[@]}"; do
+        docker rmi "${hsh}"
+    done
+}
+
+#[DOC] Deletes exited containers
+function podman-cleanup-containers() {
+    local -a CONTAINER_HASHES
+    mapfile -t CONTAINER_HASHES < <(docker ps -a | grep 'Exited' | awk '{print $1}')
+    for hsh in "${CONTAINER_HASHES[@]}"; do
+        docker rm "${hsh}"
+    done
+}
+
+#[DOC] Enters a podman container with a bash shell
+function pod-shell-into() {
+    podman exec -it "${1}" /bin/bash
+}
+
+# ------------------------------------------ #

@@ -1,0 +1,101 @@
+#!/bin/bash
+
+export PROMPT_VERSION=1
+
+## (C) 2023
+## Ramon Brooker <rbrooker@aeo3.io>
+# shellcheck source=/dev/null
+
+source /etc/environment
+source /etc/bash.bashrc.d/lib/colourrc
+
+force_color_prompt=yes
+
+if [ -n "$force_color_prompt" ]; then
+    if [ -x /usr/bin/tput ] && tput setaf 1 >&/dev/null; then
+        export color_prompt=yes
+    else
+        export color_prompt=
+    fi
+fi
+
+export HOSTNAME_TWO='[38;5;29m\]'
+export DEFAULT_USERNAME_COLOUR='[38;5;247m\]'
+export TEXT_COLOUR='[38;5;254m\]'
+
+### Username Colour from ~/.over-ride
+
+if [[ ! -z ${OVERRIDE_USERNAME_COLOUR} ]]; then
+
+    export USERNAME_COLOUR=${OVERRIDE_USERNAME_COLOUR}
+
+else
+    export USERNAME_COLOUR=${DEFAULT_USERNAME_COLOUR}
+fi
+
+### Hostname Colour from ~/.over-ride
+if [[ ! -z ${OVERRIDE_HOSTNAME_COLOUR} ]]; then
+    export HOSTNAME_COLOUR=${OVERRIDE_HOSTNAME_COLOUR}
+elif [[ ${HOSTNAME_NUMBER} = "2" ]]; then
+    export HOSTNAME_COLOUR=${HOSTNAME_TWO}
+else
+    export HOSTNAME_COLOUR=${OLIVE}
+fi
+
+### PWD Colour from ~/.over-ride
+if [[ -n ${OVERRIDE_PWD_COLOUR} ]]; then
+
+    export PWD_COLOUR=${OVERRIDE_PWD_COLOUR}
+
+else
+    export PWD_COLOUR=${LT_BLUE}
+fi
+
+export OPEN_BRACKET="${PS_SQUARE_BRACKETS}[${RESET}"
+export CLOSE_BRACKET="${RESET}${PS_SQUARE_BRACKETS}]${RESET}"
+
+export HOSTNAME_GRP="${COLOUR}${HOSTNAME_COLOUR}\h${RESET}"
+export PS_PWD="${COLOUR}${PWD_COLOUR}:\w ${RESET}"
+
+export USER_HOSTNAME="${OPEN_BRACKET}${HOSTNAME_GRP}${CLOSE_BRACKET} "
+# export USER_HOSTNAME="${OPEN_BRACKET}${HOSTNAME_GRP}${CLOSE_BRACKET} ${RESET}"
+export USER_USER="${COLOUR}${USERNAME_COLOUR}\u${RESET}"
+export USER_PROMPT="${COLOUR}${USERNAME_COLOUR}\\$ ${RESET}"
+
+export ROOT_USER="${COLOUR}${ROOT_RED}\u${RESET}"
+export ROOT_PROMPT="${COLOUR}${ROOT_RED}\\$ ${RESET}"
+export ROOT_MESSAGE="${BOLD}${COLOUR}${ROOT_RED}_YOU_ARE_ROOT_ ${RESET}"
+export ROOT_FULL_MESSAGE="${ROOT_MESSAGE}${USER_HOSTNAME}"
+
+if [[ -f ${HOME}/.no_root_message ]]; then
+    export ROOT_PS1="${USER_HOSTNAME} ${ROOT_USER}${PS_PWD}${ROOT_PROMPT}"
+else
+    export ROOT_PS1="${ROOT_FULL_MESSAGE}${ROOT_USER}${PS_PWD}${ROOT_PROMPT}"
+fi
+
+export USER_PS1="${USER_HOSTNAME}${USER_USER}${PS_PWD}${USER_PROMPT}"
+
+## Prompt Definitions
+
+### WSL Flavour Information
+
+if [ "$color_prompt" = yes ]; then
+    if [[ ${IS_WSL} = "FALSE" ]]; then
+        if [ $UID = 0 ]; then
+            export PS1="${ROOT_PS1}"
+        else
+            export PS1="${USER_PS1}"
+        fi
+    else
+        ##  SYSTEM IS WSL
+        WSL_MESSAGE="${YELLO}(${WSL_FLAVOUR}) ${RESET}"
+        WSL_ROOT_PS1="${WSL_MESSAGE}${ROOT_FULL_MESSAGE}${ROOT_USER}${PS_PWD}${ROOT_PROMPT}"
+        WSL_USER_PS1="${WSL_MESSAGE}${USER_PS1}"
+        if [ $UID = 0 ]; then
+            export PS1="${WSL_ROOT_PS1}"
+        else
+            export PS1="${WSL_USER_PS1}"
+        fi
+    fi
+fi
+unset color_prompt force_color_prompt

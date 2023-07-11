@@ -1,0 +1,233 @@
+#!/bin/bash
+
+export ALIASES_VERSION=1
+
+## (C) 2023
+## Ramon Brooker <rbrooker@aeo3.io>
+
+# shellcheck source=/dev/null
+
+## Use functions from functionrc
+source /etc/bash.bashrc.d/functionrc
+PACKAGE_MANAGER=$(ddistro 3)
+
+## Aliases
+
+# Add an "alert" alias for long running commands.  Use like so:
+#   sleep 10; alert
+alias alert='notify-send --urgency=low -i "$([ $? = 0 ] && echo terminal || echo error)" "$(history|tail -n1|sed -e '\''s/^\s*[0-9]\+\s*//;s/[;&|]\s*alert$//'\'')"'
+
+if [ $UID = 0 ]; then
+    ## For Root User
+    alias passwd='printf "\n ${RED}${BOLD}Never${NC} create a password for ${RED}ROOT \n\n" '
+fi
+# sudo hint
+if [ ! -e "$HOME/.sudo_as_admin_successful" ] && [ ! -e "$HOME/.hushlogin" ]; then
+    case " $(groups) " in *\ sudo\ *)
+        if [ -x /usr/bin/sudo ]; then
+            cat <<-EOF
+	To run a command as administrator (user "root"), use "sudo <command>".
+	See "man sudo_root" for details.
+
+EOF
+        fi
+        ;;
+    esac
+fi
+
+# Aliases that ALTER standard commands
+
+# enable colour support of ls and also add handy aliases
+if [ -x /usr/bin/dircolors ]; then
+
+    test -r ~/.dircolors && eval "$(dircolors -b ~/.dircolors)" || eval "$(dircolors -b)"
+    alias dir='dir --color=auto'
+    alias vdir='vdir --color=auto'
+
+    # Add Colour to Grep
+    alias grep='grep --color=auto'
+    alias fgrep='fgrep --color=auto'
+    alias egrep='egrep --color=auto'
+
+    # some more ls aliases
+    alias ls='ls --color=auto'
+    alias ll='ls -alhF --color=auto'
+    alias la='ls -A --color=auto'
+    alias l='ls -CF  --color=auto'
+    alias l.='ls -d .* --color=auto'
+fi
+
+alias df='df -HT'
+alias dusd='du -sh'
+if [[ -x /usr/bin/nvim ]]; then
+    alias vi='nvim'
+    alias vim='nvim'
+    alias v='nvim'
+    alias snv='sudo nvim'
+
+    ## Cause I'm Funny
+    alias nano="echo 'don\'t you mean nvim'"
+    alias emacs='nvim'
+fi 
+
+# Add an "alert" alias for long running commands.  Use like so:
+#   sleep 10; alert
+alias alert='notify-send --urgency=low -i "$([ $? = 0 ] && echo terminal || echo error)" "$(history|tail -n1|sed -e '\''s/^\s*[0-9]\+\s*//;s/[;&|]\s*alert$//'\'')"'
+
+## Quick Add
+
+alias local-user-change='nvim ${HOME}/.over-ride; source ${HOME}/.bashrc'
+alias rebash='source ${HOME}/.bashrc '
+
+## Navigation and Laziness
+alias ..='cd ../'
+alias x='exit'
+
+alias histawk='history | awk '
+
+## Cause I usually can't remember
+alias clean='clear'
+alias gtar='tar -cvzf '
+alias v='nvim '
+## rsync -a ==> -rlptgoD ==> --recursive --links --perms --times --group --owner --devices
+alias rsync-dir='rsync -a --human-readable --progress --compress '
+
+## Just for standard Users
+if [[ ${UID} -gt 999 ]]; then
+    alias su='sudo su '
+fi
+
+## Distro Flavour Specific
+case "${PACKAGE_MANAGER}" in
+    apt | apt-get ) 
+        source /etc/bash.bashrc.d/lib/alias-debian
+        ;;
+    yum | dnf | rpm ) 
+        source /etc/bash.bashrc.d/lib/alias-yum
+        ;;
+    zypper ) 
+        source /etc/bash.bashrc.d/lib/alias-suse
+        ;;
+esac 
+
+## Prevent typos causing issues
+alias restricted-bash='rbash' 
+alias rbash='echo "try restricted-bash"'
+
+## Navigation Laziness
+alias opt='cd /opt'
+alias dl='cd ~/Downloads'
+alias doc='cd ~/Documents'
+alias bsh='cd /etc/bash.bashrc.d/'
+
+## System Tools
+alias psgrep='ps aux | grep -v grep | grep '
+alias srvs='service --status-all'
+
+
+## Ruby Development
+alias gemi='gem install '
+alias rvmc='rvm current'
+
+
+if [[ -x /usr/bin/netstat ]]; then 
+    # TCP Connections
+    alias established='netstat -napt | grep ESTABLISHED'
+    # TCP Connections
+    alias established-l='netstat -napt | grep ESTABLISHED'
+
+    # Listening TCP
+    alias listening='netstat -napt | grep LISTEN'
+    # Listening on Localhost only TCO
+    alias listening-l='sudo netstat -napt | grep -i LISTEN | grep 127.0.0.1'
+
+    # Listening UDP
+    alias listening-u='netstat -napu | grep LISTEN'
+    # Listening on Localhost only UDP
+    alias listening-lu='sudo netstat -napu | grep -i LISTEN | grep 127.0.0.1'
+fi 
+
+
+if [[ -x /usr/bin/ss ]]; then 
+    # TCP Connections
+    alias established='ss -napt | grep ESTAB'
+    # TCP Connections
+    alias established-l='ss -napt | grep ESTAB'
+
+    # Listening TCP
+    alias listening='ss -napt | grep LISTEN'
+    # Listening on Localhost only TCO
+    alias listening-l='sudo ss -napt | grep -i LISTEN | grep 127.0.0.1'
+    # Listening UDP
+    alias listening-u='ss -naptu | grep udp | grep LISTEN'
+    # Listening on Localhost only UDP
+    alias listening-lu='sudo ss -naptu | grep udp | grep -i LISTEN | grep 127.0.0.1 '
+
+    ## Check if there is a glut of TIME_WAIT -- returns a number
+    alias get-timewait='ss | grep TIME_WAIT | wc -l'
+fi 
+
+## Added Help
+if [[ -x /usr/bin/docker ]]; then
+    alias d='docker '
+    alias dimages='docker images '
+    alias dps='docker ps '
+    alias dpsa='docker ps -a'
+    alias dpull='docker pull '
+    alias dsearch='docker search '
+fi
+
+if [[  -x /usr/bin/podman ]]; then
+    alias p='podman '
+    alias ppsa='podman ps -a'
+    alias prunit='podman run -dit '
+fi
+
+if [[ -x /usr/bin/kubectl ]]; then
+    alias k8s='kubeclt '
+    complete -o default -F __start_kubectl k8s
+fi
+
+if [[  -x /usr/bin/minikube ]]; then
+    alias k='minikube kubectl '
+    alias m='minikube '
+    complete -F __start_minikube k
+    complete -F __start_minikube m
+fi
+
+# ## not sure where it will be installed
+# TF=$(which terraform)
+# if [[ -x ${TF} ]]; then
+#     alias tf='terraform '
+#     alias tfplan='terraform plan '
+#     complete -C ${TF} terraform
+# fi
+
+
+# if [[  -x ${vagrant} ]]; then
+#     alias vup='vagrant up'
+#     alias vdown='vagrant halt'
+#     alias vup-again='vagrant resume'
+#     alias vres='vagrant resume'
+# fi
+
+if [[ -x /usr/bin/git ]]; then
+    alias g='git '
+    alias gct='git commit -am '
+    alias gstatus='git status '
+fi
+
+### More to add
+alias setclip="xclip -selection c"
+alias getclip="xclip -selection c -o"
+
+
+# Quick creation of a Changelog formatted date
+alias changlog-date='date +"%a %b %d %Y"'
+alias my-functions="cat /etc/bash.bashrc.d/functionrc | grep 'function' | awk '{ print $1 }' "
+
+
+
+## Last Line ##
+complete -F _complete_alias "${!BASH_ALIASES[@]}"
+## Nothing Below here ##

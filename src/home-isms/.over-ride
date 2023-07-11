@@ -1,0 +1,73 @@
+#!/bin/bash
+
+## (C) 2023
+## Ramon Brooker
+## rbrooker@aeo3.io
+
+# export VAR=VALUE
+
+###         Colours 
+# OFF_WHITE   
+# WARM_WHITE
+# EASY_WHITE
+# GRAY
+# YELLO
+# GOLD
+# ORANGE
+
+# LT_BLUE
+# AZURE
+
+# PINK
+# BRIGHT_PINK
+
+# ROOT_RED
+
+# LIME
+# GREEN
+# OLIVE
+
+# NC
+
+# BOLD
+
+
+
+
+
+
+
+# Override Colour System Specific --  Default
+# export OVERRIDE_SQUARE_BRACKETS=${LIGHT_GRAY}
+# export OVERRIDE_HOSTNAME_COLOUR=${AZURE}
+# export OVERRIDE_USERNAME_COLOUR=${LIME}
+# export OVERRIDE_PWD_COLOUR=${AZURE}
+# export OVERRIDE_PROMPT=${AZURE}
+# export HOSTNAME_NUMBER=2
+# export OVERRIDE_SQUARE_BRACKETS=${LIGHT_GRAY}
+
+export OVERRIDE_HOSTNAME_COLOUR=${BRIGHT_PINK}
+export OVERRIDE_USERNAME_COLOUR=${LIME}
+export OVERRIDE_PWD_COLOUR=${BRIGHT_PINK}
+
+
+
+## PS Colour System Specific --  Default
+## PS_SQUARE_BRACKETS='\[\033[38;5;242m\]'
+## PS_HOSTNAME_COLOUR='\[\033[38;5;29m\]'
+## PS_USERNAME_COLOUR='\[\033[38;5;2m\]'
+## PS_PATH='\[\033[38;5;37m]'
+## PS_PROMPT='\[\033[38;5;37m\]'
+
+## You can customise your prompt using these
+# OVERRIDE_HOSTNAME_COLOUR
+# OVERRIDE_USERNAME_COLOUR
+# OVERRIDE_PWD_COLOUR
+
+
+# d Pulumi to the PATH
+# export PATH=$PATH:$HOME/.pulumi/bin
+
+
+# export AWS_SECRET_ACCESS_KEY=""
+# export AWS_ACCESS_KEY=""

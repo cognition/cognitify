@@ -1,0 +1,12 @@
+#!/bin/bash
+
+export FUNCTIONS_VERSION=1
+
+## (C) 2023
+## Ramon Brooker <rbrooker@aeo3.io>
+
+# shellcheck source=/dev/null
+source /etc/bash.bashrc.d/lib/lib-functions 
+source /etc/bash.bashrc.d/lib/container-functions
+source /etc/bash.bashrc.d/lib/dirs-functions
+source /etc/bash.bashrc.d/lib/admin-functions

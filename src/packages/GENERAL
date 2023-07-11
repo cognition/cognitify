@@ -1,0 +1,2 @@
+bash-completion git ShellCheck cockpit cockpit-bridge sqlite3-devel sqlite3 tree unzip zip expect
+curl wget hwinfo jq fq dos2unix vim neovim openssh openssl pwgen rsync syntax-highlighting xfsdump xfsprogs 

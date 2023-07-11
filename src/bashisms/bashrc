@@ -1,0 +1,116 @@
+#!/bin/bash
+
+## (C) 2023
+## Ramon Brooker
+## rbrooker@aeo3.io
+
+# If not running interactively, don't do anything
+case $- in
+    *i*) ;;
+      *) return;;
+esac
+
+set bell-style none
+
+# History Settings 
+
+
+
+########## Bring in other scripts  #########
+set bell-style none
+shopt -s cmdhist
+shopt -s checkwinsize
+shopt -s globstar
+
+## Colour definitions
+if [ -f /etc/bash.bashrc.d/lib/colourrc ]; then
+   source /etc/bash.bashrc.d/lib/colourrc
+fi
+
+# Environment definitions
+if [ -f /etc/bash.bashrc.d/environmentrc ]; then
+   source /etc/bash.bashrc.d/environmentrc
+fi 
+
+# Functions definitions
+if [ -f /etc/bash.bashrc.d/functionsrc ]; then
+   source /etc/bash.bashrc.d/functionrc
+fi
+
+# Alias definitions.
+if [ -f /etc/bash.bashrc.d/aliasrc ]; then
+   source /etc/bash.bashrc.d/aliasrc
+fi 
+
+## Local Over ride file to over ride anything from standard
+if [[  -f /etc/bash.bashrc.d/promptrc  ]] ; then
+   source /etc/bash.bashrc.d/promptrc
+fi
+
+## Local Over ride file to over ride anything from standard
+if [[  -f "${HOME}"/.over-ride ]] ; then
+   source "${HOME}"/.over-ride
+fi
+
+
+# make less more friendly for non-text input files, see lesspipe(1)
+[ -x /usr/bin/lesspipe ] && eval "$(SHELL=/bin/sh lesspipe)"
+
+# set a fancy prompt (non-colour, unless we know we "want" colour)
+case "$TERM" in
+    xterm-color|*-256color) color_prompt=yes;;
+esac
+
+# sudo hint
+if [ ! -e "$HOME/.sudo_as_admin_successful" ] && [ ! -e "$HOME/.hushlogin" ] ; then
+    case " $(groups) " in *\ qe-admin\ *|*\ sudo\ *)
+        if [ -x /usr/bin/sudo ]; then
+            cat <<-EOF
+To run a command as administrator (user "root"), use "sudo <command>".
+See "man sudo_root" for details.
+EOF
+        fi
+    esac
+fi
+
+
+# if the command-not-found package is installed, use it
+if [ -x /usr/lib/command-not-found -o -x /usr/share/command-not-found/command-not-found ]; then
+# check because c-n-f could've been removed in the meantime
+    function command_not_found_handle {
+        if [ -x /usr/lib/command-not-found ]; then
+            /usr/lib/command-not-found -- "$1"
+            return $?
+        elif [ -x /usr/share/command-not-found/command-not-found ]; then
+            /usr/share/command-not-found/command-not-found -- "$1"
+            return $?
+        else
+            printf "%s: command not found\n" "$1" >&2
+            return 127
+        fi
+}
+fi
+
+if [[ -z "$XDG_RUNTIME_DIR" ]]; then
+  export XDG_RUNTIME_DIR=/run/user/$UID
+  if [[ ! -d "$XDG_RUNTIME_DIR" ]]; then
+    export XDG_RUNTIME_DIR=/tmp/$USER-runtime
+    if [[ ! -d "$XDG_RUNTIME_DIR" ]]; then
+      mkdir -m 0700 "$XDG_RUNTIME_DIR"
+    fi
+  fi
+fi
+
+
+if ! shopt -oq posix; then
+  if [ -f /usr/share/bash-completion/bash_completion ]; then
+   source /usr/share/bash-completion/bash_completion
+  elif [ -f /etc/bash_completion ]; then
+   source /etc/bash_completion
+  fi
+fi
+
+## Local Over ride file to over ride anything from standard
+if [[  -f "${HOME}"/.over-ride ]] ; then
+   source "${HOME}"/.over-ride
+fi

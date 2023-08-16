@@ -21,12 +21,12 @@ export HISTTIMEFORMAT="%Y %h %d %H:%M:%S  "
 export LIBGL_ALWAYS_INDIRECT=1
 
 if [[ -x /usr/bin/nvim ]]; then
-    export EDITOR=/usr/bin/${EDITOR:=nvim}
+    export EDITOR=/usr/bin/nvim
 fi
 ##########################         EXPORTS          ########################
 
 if [[ ${UID} -gt 999 ]]; then
-    export PATH=${HOME}/.bin
+    PATH=${HOME}/.bin
     export PATH=${PATH}:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/opt/bin
 else
     # Root or System User

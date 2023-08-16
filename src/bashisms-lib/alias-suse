@@ -1,0 +1,19 @@
+#!/bin/bash
+
+## (C) 2023
+## Ramon Brooker <rbrooker@aeo3.io>
+
+# shellcheck source=/dev/null  
+
+## Suse  (Enterprise Suse, openSUSE, Rancher)
+
+## Zypper 
+
+alias z='sudo zypper '
+alias zsearch='sudo zypper search '
+alias zins='sudo zypper install '
+alias zref='sudo zypp-refresh'
+alias zup='sudo zypper update'
+complete -F _minimal z
+complete -F _minimal zsearch
+complete -F _minimal zins

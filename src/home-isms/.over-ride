@@ -65,7 +65,7 @@ export OVERRIDE_PWD_COLOUR=${BRIGHT_PINK}
 # OVERRIDE_PWD_COLOUR
 
 
-# d Pulumi to the PATH
+# Pulumi to the PATH
 # export PATH=$PATH:$HOME/.pulumi/bin
 
 

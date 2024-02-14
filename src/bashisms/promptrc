@@ -2,12 +2,16 @@
 
 export PROMPT_VERSION=1
 
-## (C) 2023
+## (C) 2024
 ## Ramon Brooker <rbrooker@aeo3.io>
 # shellcheck source=/dev/null
 
 source /etc/environment
 source /etc/bash.bashrc.d/lib/colourrc
+
+if [[ -f "${HOME}"/.over-ride ]]; then 
+    source "${HOME}"/.over-ride 
+fi 
 
 force_color_prompt=yes
 

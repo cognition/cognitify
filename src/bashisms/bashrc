@@ -63,7 +63,7 @@ esac
 
 # sudo hint
 if [ ! -e "$HOME/.sudo_as_admin_successful" ] && [ ! -e "$HOME/.hushlogin" ] ; then
-    case " $(groups) " in *\ qe-admin\ *|*\ sudo\ *)
+    case " $(groups) " in *\ sudo\ *)
         if [ -x /usr/bin/sudo ]; then
             cat <<-EOF
 To run a command as administrator (user "root"), use "sudo <command>".
@@ -101,16 +101,20 @@ if [[ -z "$XDG_RUNTIME_DIR" ]]; then
   fi
 fi
 
-
 if ! shopt -oq posix; then
   if [ -f /usr/share/bash-completion/bash_completion ]; then
    source /usr/share/bash-completion/bash_completion
   elif [ -f /etc/bash_completion ]; then
    source /etc/bash_completion
   fi
+  if [[ -x /usr/bin/pipx ]]; then 
+	eval "$(register-python-argcomplete pipx)"
+  fi 
 fi
 
 ## Local Over ride file to over ride anything from standard
 if [[  -f "${HOME}"/.over-ride ]] ; then
    source "${HOME}"/.over-ride
 fi
+
+

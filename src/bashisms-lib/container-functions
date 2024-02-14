@@ -23,7 +23,7 @@ function docker-list-types() {
 #[DOC] Gets rid of old docker builds
 function docker-cleanup-old-builds() {
     local -a CONTAINER_HASHES
-    mapfile -t CONTAINER_HASHES < <(docker-list-types '<none>')
+    mapfile -t CONTAINER_HASHES < <(docker-list-types 'none')
     for hsh in "${CONTAINER_HASHES[@]}"; do
         docker rmi "${hsh}"
     done

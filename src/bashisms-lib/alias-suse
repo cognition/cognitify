@@ -14,6 +14,7 @@ alias zsearch='sudo zypper search '
 alias zins='sudo zypper install '
 alias zref='sudo zypp-refresh'
 alias zup='sudo zypper update'
+alias zdup='sudo zypper dup'
 complete -F _minimal z
 complete -F _minimal zsearch
 complete -F _minimal zins

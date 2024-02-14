@@ -224,7 +224,7 @@ alias getclip="xclip -selection c -o"
 
 # Quick creation of a Changelog formatted date
 alias changlog-date='date +"%a %b %d %Y"'
-alias my-functions="cat /etc/bash.bashrc.d/functionrc | grep 'function' | awk '{ print $1 }' "
+alias my-functions="cat /etc/bash.bashrc.d/lib/*-functions | grep 'function' | awk '{ print $1 }' "
 
 
 

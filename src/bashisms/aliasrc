@@ -224,10 +224,10 @@ alias getclip="xclip -selection c -o"
 
 # Quick creation of a Changelog formatted date
 alias changlog-date='date +"%a %b %d %Y"'
-alias my-functions="cat /etc/bash.bashrc.d/lib/*-functions | grep 'function' | awk '{ print $1 }' "
-
 
 
 ## Last Line ##
-complete -F _complete_alias "${!BASH_ALIASES[@]}"
+if [[ -f /etc/bash_completion.d/complete_alias ]]; then
+    complete -F _complete_alias "${!BASH_ALIASES[@]}"
+fi 
 ## Nothing Below here ##

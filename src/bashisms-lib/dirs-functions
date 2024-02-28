@@ -2,14 +2,14 @@
 
 export DIRS_FUNCTION_VERSION=1
 
-## (C) 2023
+## (C) 2024
 ## Ramon Brooker <rbrooker@aeo3.io>
 
-function list-empty-dirs() {
+function list-empty-dirs {
     find . -type d -empty -print
 }
 
-function del-empty-dirs() {
+function del-empty-dirs {
     #	if [[ ${PWD} = ${HOME} ]]; then
     #		echo "Are you sure you want to delete these files? "
     #	promtp

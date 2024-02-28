@@ -2,13 +2,13 @@
 
 export CONTAINER_FUNCTIONS_VERSION=1
 
-## (C) 2023
+## (C) 2024
 ## Ramon Brooker <rbrooker@aeo3.io>
 
 # ------------------------------------------ #
 ### Docker
 
-function docker-list-types() {
+function docker-list-types {
     if TYPES="${1}" ; then 
         local -a CONTAINER_HASHES
         mapfile -t CONTAINER_HASHES < <(docker images | grep "${TYPES}" | awk '{print $3}')        
@@ -21,7 +21,7 @@ function docker-list-types() {
 
 
 #[DOC] Gets rid of old docker builds
-function docker-cleanup-old-builds() {
+function docker-cleanup-old-builds {
     local -a CONTAINER_HASHES
     mapfile -t CONTAINER_HASHES < <(docker-list-types 'none')
     for hsh in "${CONTAINER_HASHES[@]}"; do
@@ -32,7 +32,7 @@ function docker-cleanup-old-builds() {
 
 
 #[DOC] Deletes exited containers
-function docker-cleanup-containers() {
+function docker-cleanup-containers {
     local -a CONTAINER_HASHES
     mapfile -t CONTAINER_HASHES < <(docker ps -a | grep 'Exited' | awk '{print $1}')
     for hsh in "${CONTAINER_HASHES[@]}"; do
@@ -41,7 +41,7 @@ function docker-cleanup-containers() {
 }
 
 #[DOC] Enters a docker container with a bash shell
-function shell-into-docker() {
+function shell-into-docker {
     docker exec -it "${1}" /bin/bash
 }
 
@@ -49,7 +49,7 @@ function shell-into-docker() {
 ###  Podman
 
 #[DOC]  Gets rid of old podman builds
-function podman-cleanup-old-builds() {
+function podman-cleanup-old-builds {
     local -a CONTAINER_HASHES
     mapfile -t CONTAINER_HASHES < <(podman images | grep '<none>' | awk '{print $3}')
     for hsh in "${CONTAINER_HASHES[@]}"; do
@@ -58,7 +58,7 @@ function podman-cleanup-old-builds() {
 }
 
 #[DOC] Deletes exited containers
-function podman-cleanup-containers() {
+function podman-cleanup-containers {
     local -a CONTAINER_HASHES
     mapfile -t CONTAINER_HASHES < <(docker ps -a | grep 'Exited' | awk '{print $1}')
     for hsh in "${CONTAINER_HASHES[@]}"; do
@@ -67,7 +67,7 @@ function podman-cleanup-containers() {
 }
 
 #[DOC] Enters a podman container with a bash shell
-function pod-shell-into() {
+function pod-shell-into {
     podman exec -it "${1}" /bin/bash
 }
 

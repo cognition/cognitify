@@ -2,15 +2,15 @@
 # shellcheck disable=SC2317  # Don't warn about unreachable commands in this function
 export LIB_FUNCTIONS_VERSION=1
 
-## (C) 2023
+## (C) 2024
 ## Ramon Brooker <rbrooker@aeo3.io>
 
-function note-addition() {
+function note-addition {
     timestamp=$(date +"%a %b %d %Y - %X")
     echo "${1} -- ${timestamp}" >>/etc/bash.bashrc.d/added
 }
 
-function stub-script1() {
+function stub-script1 {
 
     if [[ ${1} = '' ]]; then
         echo "this function requires a name as a parameter"
@@ -39,7 +39,7 @@ EOF
 
 ### Inspired by Microsoft's Defender Installation Script
 #[DOC] Detects the distro, version, family, package manager
-function ddistro() {
+function ddistro {
     local INDEX=${1}
     if [[ ${INDEX} -gt 3 ]]; then
         cat <<EOF
@@ -94,7 +94,7 @@ EOF
 }
 
 #[DOC] Used to programmically check if a user is a member of a group
-function group-check() {
+function group-check {
 
     if [[ ${1} = '' ]]; then
         echo "this function requires a name as a parameter"
@@ -114,7 +114,7 @@ function group-check() {
 declare -a optional_paths 
 export optional_paths=("/usr/local/bin" "/usr/bin" "/usr/local/sbin" "/usr/sbin" "${HOME}/.local/bin" "${HOME}/.bin" )
 
- function  app_is_there()  {
+ function  app_is_there  {
     app=${1}
     for path in "${optional_paths[@]}"; do
         if [[ -x ${path}/${app} ]]; then
@@ -124,12 +124,12 @@ export optional_paths=("/usr/local/bin" "/usr/bin" "/usr/local/sbin" "/usr/sbin"
     return 1
  }
 
-function app_values() {
+function app_values {
     app=${1}
     app_is_there "${app}" && echo $?
 }
 
-function find-latency() {
+function find-latency {
     ## takes an array of addresses and lists them out in terms of shotest to longest latency
     declare -a NAMES
     NAMES=("${1}")

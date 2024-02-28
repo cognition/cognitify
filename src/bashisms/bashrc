@@ -12,9 +12,8 @@ esac
 
 set bell-style none
 
-# History Settings 
-
-
+# History Settings
+## See environmentrc
 
 ########## Bring in other scripts  #########
 set bell-style none
@@ -116,5 +115,4 @@ fi
 if [[  -f "${HOME}"/.over-ride ]] ; then
    source "${HOME}"/.over-ride
 fi
-
 

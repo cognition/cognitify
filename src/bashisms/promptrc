@@ -93,7 +93,7 @@ if [ "$color_prompt" = yes ]; then
     else
         ##  SYSTEM IS WSL
         WSL_MESSAGE="${YELLO}(${WSL_FLAVOUR}) ${RESET}"
-        WSL_ROOT_PS1="${WSL_MESSAGE}${ROOT_FULL_MESSAGE}${ROOT_USER}${PS_PWD}${ROOT_PROMPT}"
+        WSL_ROOT_PS1="${WSL_MESSAGE}${ROOT_PS1}"
         WSL_USER_PS1="${WSL_MESSAGE}${USER_PS1}"
         if [ $UID = 0 ]; then
             export PS1="${WSL_ROOT_PS1}"

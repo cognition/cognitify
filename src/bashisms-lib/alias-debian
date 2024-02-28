@@ -1,6 +1,6 @@
 #!/bin/bash
 
-## (C) 2023
+## (C) 2024
 ## Ramon Brooker <rbrooker@aeo3.io>
 
 # shellcheck source=/dev/null  
@@ -13,5 +13,6 @@ alias aptup='sudo apt-get update'
 alias aptupgrade='sudo apt-get update && sudo apt-get upgrade -y'
 alias asearch='sudo apt-get update; sudo apt-cache search '
 alias aptin='sudo apt-get install '
+
 complete -F _minimal asearch
 complete -F _minimal aptin

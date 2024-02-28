@@ -1,15 +1,16 @@
 #!/bin/bash
 
 export ADMIN_FUNCTIONS_VERSION=1
+YES=0
 
-## (C) 2023
+## (C) 2024
 ## Ramon Brooker <rbrooker@aeo3.io>
 
 ## Source itself to use functions from within all the way through the file
 # source admin-functions
 
 #[DOC] Fix Hostname and Domain
-function update-hostname() {
+function update-hostname {
 
     if [[ ${1} = "" ]] || [[ ${2} = "" ]]; then
         echo "command expects Input : "
@@ -28,7 +29,7 @@ function update-hostname() {
 
 # [FIX] Hostnames are not all accounted for and some do not match to the system ips
 #[DOC] prints to screen all associated ips
-function get-system-ips() {
+function get-system-ips {
     LOCAL_IPS=$(hostname -I)
     for ip in $LOCAL_IPS; do
         printf "%s\t%s\t%s\n" "${ip}" "${HOSTNAME}.${DOMAIN}" "${HOSTNAME}" >>tmp
@@ -40,7 +41,7 @@ function get-system-ips() {
 }
 
 #[DOC] Adds Environment Variables
-function add-environment-tag() {
+function add-environment-tag {
     if [[ ${1} = "" ]] || [[ ${2} = "" ]]; then
         echo "command expects Input : "
         echo "$ add-label-tag LABEL VALUE "
@@ -50,7 +51,7 @@ function add-environment-tag() {
 }
 
 
-function append-etc-bashrc() {
+function append-etc-bashrc {
 ## Add auto execute of bashrc 
 if test -e /etc/bash.bashrc ; then
     THERE=$(grep -F 'Cognitify' /etc/bash.bashrc )
@@ -71,7 +72,7 @@ if test -e /etc/bash.bashrc ; then
 fi 
 }
 
-function user-exists() {
+function user-exists {
     if test -n "${1}" ; then 
         USER_NAME=${1}
     else 
@@ -82,14 +83,21 @@ function user-exists() {
 
 }
 
-## Sudo Passwordless 
-function make-user-passwordless() {
-    if test -n "${1}" ; then 
-        THE_SUDER="${1}"
+# ## Sudo Passwordless 
+# function make-user-passwordless {
+#     if test -n "${1}" ; then 
+#         THE_SUDER="${1}"
         
-    fi 
+#     fi 
+#     if [[ ! -f /etc/sudoers.d/"${THE_USER}" ]]; then
+#         echo "updating user to passwordless sudo" 
+#         echo "${THE_USER}     ALL=(ALL:ALL)   NOPASSWD: ALL " > /etc/sudoers.d/${THE_USER}
+#     else
+#         read -p "User doesn't have sudo permissions currently, do you want to continue" YES
 
-    echo ""${THE_USER}"     ALL=(ALL:ALL)   NOPASSWD: ALL " > /etc/sudoers.d/"${THE_USER}" 
-    # test 
-    sudo ls  
-}
+#         if [[ ! $YES = 0 ]]; then 
+#             echo "${THE_USER}     ALL=(ALL:ALL)   NOPASSWD: ALL " > /etc/sudoers.d/${THE_USER}
+#         fi 
+#     fi     # test 
+#     sudo ls  
+# }

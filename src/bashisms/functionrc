@@ -10,3 +10,8 @@ source /etc/bash.bashrc.d/lib/lib-functions
 source /etc/bash.bashrc.d/lib/container-functions
 source /etc/bash.bashrc.d/lib/dirs-functions
 source /etc/bash.bashrc.d/lib/admin-functions
+
+
+function cog-functions {
+    cat /etc/bash.bashrc.d/lib/*-functions | grep 'function' | awk '{ print $2 \n }' 
+}

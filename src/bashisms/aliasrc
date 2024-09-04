@@ -188,7 +188,7 @@ if [[ -x /usr/bin/kubectl ]]; then
     complete -o default -F __start_kubectl k8s
 fi
 
-if [[  -x /usr/bin/minikube ]]; then
+if [[  -x /usr/bin/minikube ]] | [[ -x  /usr/local/bin/minikube ]] ; then
     alias k='minikube kubectl '
     alias m='minikube '
     complete -F __start_minikube k

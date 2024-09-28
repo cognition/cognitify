@@ -20,6 +20,13 @@ export HISTTIMEFORMAT="%Y %h %d %H:%M:%S  "
 
 export LIBGL_ALWAYS_INDIRECT=1
 
+## for alias auto complete 
+## https://github.com/cykerway/complete-alias
+export COMPAL_AUTO_UNMASK=1
+
+
+
+
 if [[ -x /usr/bin/nvim ]]; then
     export EDITOR=/usr/bin/nvim
 fi

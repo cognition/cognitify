@@ -1,5 +1,3 @@
-#!/bin/bash
-
 ## (C) 2024
 ## Ramon Brooker
 ## rbrooker@aeo3.io
@@ -56,6 +54,4 @@ EOF
 
 ## Local Environment Values
 
-# export AWS_SECRET_ACCESS_KEY=""
-# export AWS_ACCESS_KEY=""
 

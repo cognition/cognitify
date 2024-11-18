@@ -1,0 +1,90 @@
+## (C) 2024
+## Ramon Brooker <rbrooker@aeo3.io>
+
+# Include an external script containing useful functions
+# source admin-functions
+
+#[DOC] Function to update and set the system's hostname and domain.
+function update-hostname {
+    # Check if both hostname and domain are provided as arguments
+    if [[ -z $1 ]] || [[ -z $2 ]]; then
+        # Notify user if arguments are missing
+        echo "command expects Input : "
+        echo "$ update-hostname HOSTNAME DOMAIN"
+        exit 1
+    fi
+
+    # Assign input arguments to variables
+        HOSTNAME=$1
+        DOMAIN=$2
+
+    # Use hostnamectl to set the fully qualified domain name
+    sudo hostnamectl set-hostname "${HOSTNAME}.${DOMAIN}"
+    
+    # Update /etc/hostname with the new fully qualified domain name
+    echo "${HOSTNAME}.${DOMAIN}" | sudo tee /etc/hostname
+
+    # Call a function to retrieve and display the system's IP addresses
+        get-system-ips
+}
+
+#[DOC] Function to print all IP addresses associated with the system.
+function get-system-ips {
+    # Get IP addresses using hostname command and process each IP
+    hostname -I | xargs -n1 -I{} printf "%s\t%s\t%s\n" {} "${HOSTNAME}.${DOMAIN}" "${HOSTNAME}" | sort
+    # This prints each IP address followed by the full domain and hostname
+}
+
+#[DOC] Function to add environment variables to the system.
+function add-environment-tag {
+    # Check if both label and value are provided as arguments
+    if [[ -z $1 ]] || [[ -z $2 ]]; then
+        # Notify user if arguments are missing
+        echo "command expects Input : "
+        echo "$ add-environment-tag LABEL VALUE"
+        return
+    fi
+
+    # Append the environment variable definition to /etc/environment
+    echo "export $1=$2" | sudo tee -a /etc/environment
+    # This makes the environment variable persist across sessions
+}
+
+# Function to check if a user exists (functionality to be implemented)
+function user-exists {
+    # Check if username is provided as an argument
+    if [[ -z $1 ]]; then
+        # Notify user if argument is missing
+        echo "function requires input"
+        exit 1    
+    fi   
+
+    # Assign input argument to a variable
+    USER_NAME=$1
+    # Output provided username (for debug or info purposes)
+    echo "USER_NAME: ${USER_NAME}"
+}
+
+## The following function is commented out but is intended to grant passwordless sudo privileges to a user
+# function make-user-passwordless {
+#     # If a username is provided as an argument, use it
+#     if [[ -n $1 ]]; then
+#         THE_USER=$1
+#     fi 
+
+#     # Check if the sudoers file for the user does not already exist
+#     if [[ ! -f /etc/sudoers.d/"${THE_USER}" ]]; then
+#         # Inform about the update and append entry to sudoers
+#         echo "updating user to passwordless sudo" 
+#         echo "${THE_USER} ALL=(ALL:ALL) NOPASSWD: ALL" | sudo tee /etc/sudoers.d/${THE_USER}
+#     else
+#         # Prompt for confirmation if user doesn't have current sudo permissions
+#         read -p "User doesn't have sudo permissions currently, do you want to continue" YES
+#         # Add passwordless sudo permission if confirmed
+#         if [[ $YES != 0 ]]; then
+#             echo "${THE_USER} ALL=(ALL:ALL) NOPASSWD: ALL" | sudo tee /etc/sudoers.d/${THE_USER}
+#         fi 
+#     fi
+#     # List directory contents to verify sudoers changes are applied
+#     sudo ls  
+# }

@@ -1,12 +1,9 @@
-#!/bin/bash
-
 ## (C) 2024
 ## Ramon Brooker <rbrooker@aeo3.io>
 
 # shellcheck source=/dev/null  
 
 ## Debian Family  (Debian, Ubuntu, Mint, Kali)
-
 ## Apt 
 
 alias aptup='sudo apt-get update'

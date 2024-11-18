@@ -1,17 +1,13 @@
-#!/bin/bash
-
-export FUNCTIONS_VERSION=1
-
-## (C) 2023
+## (C) 2024
 ## Ramon Brooker <rbrooker@aeo3.io>
 
 # shellcheck source=/dev/null
-source /etc/bash.bashrc.d/lib/lib-functions 
-source /etc/bash.bashrc.d/lib/container-functions
-source /etc/bash.bashrc.d/lib/dirs-functions
-source /etc/bash.bashrc.d/lib/admin-functions
-
+for file in *Helpers; do
+  if [ -f "$file" ]; then
+    source "$file"
+  fi
+done
 
 function cog-functions {
-    cat /etc/bash.bashrc.d/lib/*-functions | grep 'function' | awk '{ print $2 \n }' 
+    awk '/function/{print $2}' /etc/bash.bashrc.d/lib/*-functions
 }

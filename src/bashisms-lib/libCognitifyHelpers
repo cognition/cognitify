@@ -1,0 +1,176 @@
+# shellcheck disable=SC2317  # Don't warn about unreachable commands in this function
+
+## (C) 2024
+## Ramon Brooker <rbrooker@aeo3.io>
+
+# Function: note_addition
+# This function appends a note with a timestamp to a specific file.
+# Parameters:
+#   $1 - The note to add.
+note_addition() {
+    # Echo the note and current date and time into a file
+    echo "${1} -- $(date +"%a %b %d %Y - %X")" >> /etc/bash.bashrc.d/added
+}
+
+# Function: stub_script
+# This function creates a shell script template with executable permissions.
+# Parameters:
+#   $1 - The name of the script (without .sh extension).
+stub_script() {
+    # Check if no parameter is provided, if so, display usage message
+    if [[ -z ${1} ]]; then
+        echo "This function requires a name as a parameter"
+        echo "$ stub-script myscript "
+        return 1
+    fi
+
+    local script_name="${1}.sh" # Define the script file name with .sh extension
+    # Attempt to create the file, and if it fails, print an error and exit
+    if ! touch "${script_name}"; then
+        echo "** You cannot write to this directory, try some place else **"
+        return 1
+    fi
+
+    # Write a script template into the newly created script file
+    cat > "${script_name}" <<EOF
+$(printf '%s' "$SCRIPT_SIGNATURE_BLOCK")
+
+## Generated Script Template
+echo "now running ${1}"
+
+# your script goes here
+
+
+exit \$?
+EOF
+    chmod +x "${script_name}"
+}
+
+# Function: ddistro
+# Detects and echoes information about the Linux distribution.
+# Parameters:
+#   $1 - An optional index to specify which detail to return (default is 3).
+#        0: distro, 1: version, 2: distro family, 3: package manager
+ddistro() {
+    local index=${1:-3} # Default index to 3 if not specified
+
+    # If index is greater than 3, show usage information and exit
+    if [[ ${index} -gt 3 ]]; then
+        cat <<EOF
+    detect_distro only takes 0-3
+    0 - distro
+    1 - version
+    2 - distro family
+    3 - package manager
+        no param default 3
+
+    $ detect_distro 2
+    debian
+EOF
+        return 1
+    fi
+
+    # Source the appropriate OS release file to get distribution information
+    if [ -f /etc/os-release ]; then
+        . /etc/os-release
+    elif [ -f /etc/oracle-release ]; then
+        . /etc/oracle-release 
+    elif [ -f /etc/redhat-release ]; then
+        . /etc/redhat-release       
+    else
+        echo "unable to detect distro"
+        return 1
+    fi
+
+    local distro_family # Declare variables for distro family and package manager
+    local package_manager
+    # Determine the family and package manager based on distro ID
+    case "${ID}" in 
+        *debian* | *ubuntu* | *mint* )
+            distro_family="debian"
+            package_manager="apt-get"
+                ;;
+        *rhel* | *centos* | *ol* | *oracle* | *fedora* | *rocky* | *amzn* )
+            distro_family="fedora"
+            package_manager="yum"
+                ;;
+        *suse* )
+            distro_family="suse"
+            package_manager="zypper"
+                ;;
+        *)
+            echo "unsupported distro ${ID} ${VERSION_ID}"
+                return 1
+                ;;
+    esac
+
+    # Array to hold various distro details
+    declare -a distro_details=("${ID}" "${VERSION_ID}" "${distro_family}" "${package_manager}")
+    echo "${distro_details[${index}]}" # Output the requested detail
+}
+
+# Function: group_check
+# Checks if the current user is part of a specified group.
+# Parameters:
+#   $1 - The name of the group to check.
+group_check() {
+    # Display usage information if no group name is provided
+    if [[ -z ${1} ]]; then
+        echo "This function requires a group name as a parameter"
+        echo "$ group-check group-name "
+        return 1
+    fi
+
+    # Check if the user belongs to the specified group
+    if groups | grep -qw "${1}"; then
+        echo "true" # User is in the group
+    else
+        echo "false" # User is not in the group
+    fi
+}
+
+# Declare an array with paths to commonly used directories
+declare -a optional_paths 
+export optional_paths=("$(command -v given_path)" "/usr/local/bin" "/usr/bin" "/usr/local/sbin" "/usr/sbin" "${HOME}/.local/bin" "${HOME}/.bin")
+
+# Function: app_is_there
+# Determines if an application is accessible in the specified search paths.
+# Parameters:
+#   $1 - App name to check for.
+app_is_there() {
+    local app=${1} # Application name to check
+    for path in "${optional_paths[@]}"; do # Iterate over each path
+        if [[ -x ${path}/${app} ]]; then # Check if the app is executable
+            return 0 # App found, return success
+        fi
+    done
+    return 1 # App not found, return failure
+ }
+
+# Function: app_values
+# Evaluates if an application is present and echoes a corresponding value.
+# Parameters:
+#   $1 - The application name to check.
+app_values() {
+    if app_is_there "${1}"; then
+        echo 0 # App is present
+    else
+        echo 1 # App is not present
+    fi
+}
+
+# Function: find_latency
+# Measures and lists the latency to specified network addresses.
+# Parameters:
+#   $@ - List of addresses to ping for latency tracking.
+find_latency() {
+    local addresses=("${@}") # Array of provided addresses
+
+    # For each address, perform a ping and capture the latency times
+    for addr in "${addresses[@]}"; do 
+        local latency_time
+        # Ping the address 5 times and sort the times extracted
+        latency_time=$(ping -c5 -U "$addr" | awk -F"time=" '/time=/{print $2}' | sort)
+        echo "${latency_time} | $addr" # Print the sorted latencies for the address
+    done | sort -n # Sort the final latency results numerically
+}

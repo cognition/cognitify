@@ -1,0 +1,66 @@
+## (C) 2024
+## Ramon Brooker <rbrooker@aeo3.io>
+
+# ------------------------------------------ #
+### Docker Functions
+
+docker-list-types() {
+    if [ -z "$1" ]; then
+        echo "function requires a param, like a, <none>, Exited, etc.. "
+        return
+    fi 
+
+    docker images --format '{{.ID}}' --filter "reference=$1"
+}
+
+
+#[DOC] Gets rid of old docker builds
+docker-cleanup-old-builds() {
+    local CONTAINER_HASHES
+    IFS=$'\n' read -rd '' -a CONTAINER_HASHES < <(docker-list-types 'none')
+    for hsh in "${CONTAINER_HASHES[@]}"; do
+        docker rmi "$hsh"
+    done
+}
+
+#[DOC] Deletes exited containers
+docker-cleanup-containers() {
+    local CONTAINER_HASHES
+    IFS=$'\n' read -rd '' -a CONTAINER_HASHES < <(docker ps -aq -f status=exited)
+    for hsh in "${CONTAINER_HASHES[@]}"; do
+        docker rm "$hsh"
+    done
+}
+
+#[DOC] Enters a docker container with a bash shell
+shell-into-docker() {
+    docker exec -it "$1" /bin/bash
+}
+
+# ------------------------------------------ #
+### Podman Functions
+
+#[DOC] Gets rid of old podman builds
+podman-cleanup-old-builds() {
+    local CONTAINER_HASHES
+    IFS=$'\n' read -rd '' -a CONTAINER_HASHES < <(podman images --format '{{.ID}}' --filter 'dangling=true')
+    for hsh in "${CONTAINER_HASHES[@]}"; do
+        podman rmi "$hsh"
+    done
+}
+
+#[DOC] Deletes exited containers
+podman-cleanup-containers() {
+    local CONTAINER_HASHES
+    IFS=$'\n' read -rd '' -a CONTAINER_HASHES < <(podman ps -aq -f status=exited)
+    for hsh in "${CONTAINER_HASHES[@]}"; do
+        podman rm "$hsh"
+    done
+}
+
+#[DOC] Enters a podman container with a bash shell
+pod-shell-into() {
+    podman exec -it "$1" /bin/bash
+}
+
+# ------------------------------------------ #

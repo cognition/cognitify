@@ -2,76 +2,87 @@
 ## Ramon Brooker <rbrooker@aeo3.io>
 # shellcheck source=/dev/null
 
+# Source environment variables and color definitions
 source /etc/environment
 source /etc/bash.bashrc.d/lib/colourrc
 
+# If user-specific override file exists, source it to apply user preferences
 [[ -f "${HOME}/.over-ride" ]] && source "${HOME}/.over-ride"
 
+# Setting a flag to enforce color prompt
 force_color_prompt=yes
 
+# Check if color prompts are enabled, tput command is available, and supports color changes
 if [ -n "$force_color_prompt" ] && [ -x /usr/bin/tput ] && tput setaf 1 >&/dev/null; then
-        export color_prompt=yes
+    export color_prompt=yes  # Enable color prompts
     else
-        export color_prompt=
+    export color_prompt=     # Disable color prompts
     fi
-fi
 
-HOSTNAME_TWO='[38;5;29m\]'
-DEFAULT_USERNAME_COLOUR='[38;5;247m\]'
-TEXT_COLOUR='[38;5;254m\]'
+# Define color codes for terminal prompt elements
+HOSTNAME_TWO='[38;5;29m\]'  # Alternate color code for hostname
+DEFAULT_USERNAME_COLOUR='[38;5;247m\]'  # Default username color
+TEXT_COLOUR='[38;5;254m\]'  # General text color
 
-### Username Colour from ~/.over-ride
+# Set username color based on override file, or use default
 USERNAME_COLOUR="${OVERRIDE_USERNAME_COLOUR:-$DEFAULT_USERNAME_COLOUR}"
 
-### Hostname Colour from ~/.over-ride
-if [[ ! -z ${OVERRIDE_HOSTNAME_COLOUR} ]]; then
-    HOSTNAME_COLOUR=${OVERRIDE_HOSTNAME_COLOUR}
-elif [[ ${HOSTNAME_NUMBER} = "2" ]]; then
-    HOSTNAME_COLOUR=${HOSTNAME_TWO}
+# Determine hostname color based on overrides or defaults
+if [[ -n ${OVERRIDE_HOSTNAME_COLOUR} ]]; then
+    HOSTNAME_COLOUR=${OVERRIDE_HOSTNAME_COLOUR}  # Use overridden hostname color
+elif [[ ${HOSTNAME_NUMBER} == "2" ]]; then
+    HOSTNAME_COLOUR=${HOSTNAME_TWO}  # Use alternate hostname color if specified
 else
-    HOSTNAME_COLOUR=${OLIVE}
+    HOSTNAME_COLOUR=${OLIVE}  # Default color
 fi
 
-### PWD Colour from ~/.over-ride
+# Assign colors for present working directory, with possible overrides
 PWD_COLOUR="${OVERRIDE_PWD_COLOUR:-$LT_BLUE}"
 
+# Define bracket styles for prompt elements
 OPEN_BRACKET="${PS_SQUARE_BRACKETS}[${RESET}"
 CLOSE_BRACKET="${RESET}${PS_SQUARE_BRACKETS}]${RESET}"
 
-HOSTNAME_GRP="${COLOUR}${HOSTNAME_COLOUR}\h${RESET}"
-PS_PWD="${COLOUR}${PWD_COLOUR}:\w ${RESET}"
+# Compile colored hostname and working directory strings
+HOSTNAME_GRP="${COLOUR}${HOSTNAME_COLOUR}\h${RESET}"  # Hostname with color
+PS_PWD="${COLOUR}${PWD_COLOUR}:\w ${RESET}"  # Working directory with color
 
-USER_HOSTNAME="${OPEN_BRACKET}${HOSTNAME_GRP}${CLOSE_BRACKET} "
-# export USER_HOSTNAME="${OPEN_BRACKET}${HOSTNAME_GRP}${CLOSE_BRACKET} ${RESET}"
-USER_USER="${COLOUR}${USERNAME_COLOUR}\u${RESET}"
-USER_PROMPT="${COLOUR}${USERNAME_COLOUR}\\$ ${RESET}"
+# Format different parts of the user and root prompts
+USER_HOSTNAME="${OPEN_BRACKET}${HOSTNAME_GRP}${CLOSE_BRACKET} "  # User hostname
+USER_USER="${COLOUR}${USERNAME_COLOUR}\u${RESET}"  # User's username with color
+USER_PROMPT="${COLOUR}${USERNAME_COLOUR}\\$ ${RESET}"  # Prompt symbol ($) for normal users
 
-ROOT_USER="${COLOUR}${ROOT_RED}\u${RESET}"
-ROOT_PROMPT="${COLOUR}${ROOT_RED}\\$ ${RESET}"
-ROOT_MESSAGE="${BOLD}${COLOUR}${ROOT_RED}_YOU_ARE_ROOT_ ${RESET}"
-ROOT_FULL_MESSAGE="${ROOT_MESSAGE}${USER_HOSTNAME}"
+# Root user elements
+ROOT_USER="${COLOUR}${ROOT_RED}\u${RESET}"  # Root user's username in red
+ROOT_PROMPT="${COLOUR}${ROOT_RED}\\$ ${RESET}"  # Prompt symbol (#) for root
+ROOT_MESSAGE="${BOLD}${COLOUR}${ROOT_RED}_YOU_ARE_ROOT_ ${RESET}"  # Warning message for root users
+ROOT_FULL_MESSAGE="${ROOT_MESSAGE}${USER_HOSTNAME}"  # Combining root warning with hostname
 
+# Conditional root prompt message
 if [[ -f ${HOME}/.no_root_message ]]; then
-    ROOT_PS1="${USER_HOSTNAME} ${ROOT_USER}${PS_PWD}${ROOT_PROMPT}"
+    ROOT_PS1="${USER_HOSTNAME}${ROOT_USER}${PS_PWD}${ROOT_PROMPT}"  # Simple root prompt without message
 else
-    ROOT_PS1="${ROOT_FULL_MESSAGE}${ROOT_USER}${PS_PWD}${ROOT_PROMPT}"
+    ROOT_PS1="${ROOT_FULL_MESSAGE}${ROOT_USER}${PS_PWD}${ROOT_PROMPT}"  # Root prompt with warning message
 fi
 
+# Compile full user prompt
 USER_PS1="${USER_HOSTNAME}${USER_USER}${PS_PWD}${USER_PROMPT}"
 
 ## Prompt Definitions
 
-### WSL Flavour Information
-
+# WSL (Windows Subsystem for Linux) specific configurations
 if [ "$color_prompt" = yes ]; then
-    if [[ ${IS_WSL} = "FALSE" ]]; then
-        [[ $UID = 0 ]] && export PS1="${ROOT_PS1}" || export PS1="${USER_PS1}"
+    if [[ ${IS_WSL} == "FALSE" ]]; then
+        # If not running in WSL, set prompt based on user id
+        [[ $UID -eq 0 ]] && export PS1="${ROOT_PS1}" || export PS1="${USER_PS1}"
     else
-        ##  SYSTEM IS WSL
+        # For WSL, add WSL flavor info to the prompt
         WSL_MESSAGE="${YELLO}(${WSL_FLAVOUR}) ${RESET}"
-        WSL_ROOT_PS1="${WSL_MESSAGE}${ROOT_PS1}"
-        WSL_USER_PS1="${WSL_MESSAGE}${USER_PS1}"
-        [[ $UID = 0 ]] && export PS1="${WSL_ROOT_PS1}" || export PS1="${WSL_USER_PS1}"
+        WSL_ROOT_PS1="${WSL_MESSAGE}${ROOT_PS1}"  # Root prompt with WSL info
+        WSL_USER_PS1="${WSL_MESSAGE}${USER_PS1}"  # User prompt with WSL info
+        [[ $UID -eq 0 ]] && export PS1="${WSL_ROOT_PS1}" || export PS1="${WSL_USER_PS1}"
     fi
 fi
+
+# Clean up environment variables used for determining color support
 unset color_prompt force_color_prompt

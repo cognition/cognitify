@@ -1,6 +1,4 @@
-#!/bin/bash
-
-## (C) 2023
+## (C) 2024
 ## Ramon Brooker
 ## rbrooker@aeo3.io
 
@@ -21,30 +19,14 @@ shopt -s cmdhist
 shopt -s checkwinsize
 shopt -s globstar
 
-## Colour definitions
-if [ -f /etc/bash.bashrc.d/lib/colourrc ]; then
-   source /etc/bash.bashrc.d/lib/colourrc
-fi
 
-# Environment definitions
-if [ -f /etc/bash.bashrc.d/environmentrc ]; then
-   source /etc/bash.bashrc.d/environmentrc
-fi 
+## Source all rc files in /etc/bash.bashrc.d/
+for rcfile in /etc/bash.bashrc.d/*rc; do
+  if [ -f "$rcfile" ]; then
+    source "$rcfile"
+  fi
+done
 
-# Functions definitions
-if [ -f /etc/bash.bashrc.d/functionsrc ]; then
-   source /etc/bash.bashrc.d/functionrc
-fi
-
-# Alias definitions.
-if [ -f /etc/bash.bashrc.d/aliasrc ]; then
-   source /etc/bash.bashrc.d/aliasrc
-fi 
-
-## Local Over ride file to over ride anything from standard
-if [[  -f /etc/bash.bashrc.d/promptrc  ]] ; then
-   source /etc/bash.bashrc.d/promptrc
-fi
 
 ## Local Over ride file to over ride anything from standard
 if [[  -f "${HOME}"/.over-ride ]] ; then

@@ -8,6 +8,3 @@ for file in *Helpers; do
   fi
 done
 
-function cog-functions {
-    awk '/function/{print $2}' /etc/bash.bashrc.d/lib/*-functions
-}

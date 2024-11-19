@@ -43,9 +43,7 @@ fi
 # enable colour support of ls and also add handy aliases
 if [ -x /usr/bin/dircolors ]; then
     # Check for the custom color file first
-    if [ -r /etc/bash.bashrc.d/lib/libCognitifyColours ]; then
-        eval "$(dircolors -b /etc/bash.bashrc.d/lib/libCognitifyColours)"
-    elif [ -r ~/.dircolors ]; then
+    if [ -r ~/.dircolors ]; then
         eval "$(dircolors -b ~/.dircolors)"
     else
         eval "$(dircolors -b)"
@@ -204,20 +202,20 @@ if [[  -x /usr/bin/minikube ]] || [[ -x /usr/local/bin/minikube ]] ; then
 fi
 
 # Check for Terraform and define aliases if installed
-TF=$(which terraform)
-if [[ -x ${TF} ]]; then
-    alias tf='terraform '
-    alias tfplan='terraform plan '
-    complete -C ${TF} terraform
-fi
+# TF=$(which terraform)
+# if [[ ${TF} ~= 'which:.*' ]]; then
+#     alias tf='terraform '
+#     alias tfplan='terraform plan '
+#     complete -C ${TF} terraform
+# fi
 
 # Vagrant management aliases
-if [[  -x ${vagrant} ]]; then
-    alias vup='vagrant up'
-    alias vdown='vagrant halt'
-    alias vup-again='vagrant resume'
-    alias vres='vagrant resume'
-fi
+# if [[  -x ${vagrant} ]]; then
+#     alias vup='vagrant up'
+#     alias vdown='vagrant halt'
+#     alias vup-again='vagrant resume'
+#     alias vres='vagrant resume'
+# fi
 
 # Git version control aliases for efficiency
 if [[ -x /usr/bin/git ]]; then

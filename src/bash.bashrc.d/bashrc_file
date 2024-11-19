@@ -21,11 +21,28 @@ shopt -s globstar
 
 
 ## Source all rc files in /etc/bash.bashrc.d/
-for rcfile in /etc/bash.bashrc.d/*rc; do
-  if [ -f "$rcfile" ]; then
-    source "$rcfile"
-  fi
-done
+# for rcfile in /etc/bash.bashrc.d/*rc; do
+#   if [ -f "$rcfile" ]; then
+#     echo "$rsfile"
+#     # source "$rcfile"
+#   fi
+# done
+
+if [[  -f /etc/bash.bashrc.d/aliasrc ]] ; then
+   source /etc/bash.bashrc.d/functionrc
+fi
+
+if [[  -f /etc/bash.bashrc.d/aliasrc ]] ; then
+   source /etc/bash.bashrc.d/environmentrc
+fi
+
+if [[  -f /etc/bash.bashrc.d/aliasrc ]] ; then
+   source /etc/bash.bashrc.d/promptrc
+fi
+
+if [[  -f /etc/bash.bashrc.d/aliasrc ]] ; then
+   source /etc/bash.bashrc.d/aliasrc
+fi
 
 
 ## Local Over ride file to over ride anything from standard

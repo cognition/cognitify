@@ -21,4 +21,4 @@ sudo chmod -R g+w /etc/bash.bashrc.d
 ## Maintained
 
 Ramon Brooker <rbrooker@aeo3.io> 
-(C) 2023
+(C) 2024

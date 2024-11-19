@@ -7,8 +7,8 @@ fi
 
 
 # shellcheck source=/dev/null
-if [[ -f /etc/bash.bashrc.d/bashrc ]]; then
-    source /etc/bash.bashrc.d/bashrc
+if [[ -f /etc/bash.bashrc.d/bashrc_file ]]; then
+    source /etc/bash.bashrc.d/bashrc_file
 fi
 
 

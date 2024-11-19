@@ -4,7 +4,7 @@
 
 # Source environment variables and color definitions
 source /etc/environment
-source /etc/bash.bashrc.d/lib/colourrc
+source /etc/bash.bashrc.d/lib/cognitifyColours
 
 # If user-specific override file exists, source it to apply user preferences
 [[ -f "${HOME}/.over-ride" ]] && source "${HOME}/.over-ride"

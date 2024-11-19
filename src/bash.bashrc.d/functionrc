@@ -2,10 +2,22 @@
 ## Ramon Brooker <rbrooker@aeo3.io>
 
 # shellcheck source=/dev/null
-for file in lib/*Helpers; do
-  if [ -f "$file" ]; then
-  # echo $file
-    source "$file"
-  fi
-done
+if [[  -f lib/libAdminHelpers ]] ; then
+   source lib/libAdminHelpers
+fi
 
+if [[  -f lib/libCognitifyHelpers ]] ; then
+   source lib/libCognitifyHelpers
+fi
+
+if [[  -f lib/libContainerHelpers ]] ; then
+   source lib/libContainerHelpers
+fi
+
+if [[  -f lib/libDirectyHelpers ]] ; then
+   source lib/libDirectyHelpers
+fi
+
+if [[  -f lib/libFileSearchIterateExecuteHelpers ]] ; then
+   source lib/libFileSearchIterateExecuteHelpers
+fi

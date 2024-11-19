@@ -28,15 +28,15 @@ shopt -s globstar
 #   fi
 # done
 
-if [[  -f /etc/bash.bashrc.d/aliasrc ]] ; then
+if [[  -f /etc/bash.bashrc.d/functionrc ]] ; then
    source /etc/bash.bashrc.d/functionrc
 fi
 
-if [[  -f /etc/bash.bashrc.d/aliasrc ]] ; then
+if [[  -f /etc/bash.bashrc.d/environmentrc ]] ; then
    source /etc/bash.bashrc.d/environmentrc
 fi
 
-if [[  -f /etc/bash.bashrc.d/aliasrc ]] ; then
+if [[  -f /etc/bash.bashrc.d/promptrc ]] ; then
    source /etc/bash.bashrc.d/promptrc
 fi
 

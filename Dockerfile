@@ -18,7 +18,7 @@ RUN useradd -m -s /bin/bash testuser && \
 WORKDIR /opt/test
 
 # Copy the entire directory structure to the container
-COPY . .
+COPY . /opt/test
 
 # Ensure scripts have the correct permissions
 RUN chmod +x bin/*.sh
@@ -28,4 +28,4 @@ USER testuser
 WORKDIR /opt/test/bin
 
 # Run the install script
-CMD ["./install.sh"]
+CMD ["/usr/bin/bash"]

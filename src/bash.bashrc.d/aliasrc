@@ -6,7 +6,7 @@
 
 ## Source reusable functions from functionrc
 ## This ensures that any functions defined in functionrc are available in this shell environment
-source /etc/bash.bashrc.d/functionrc
+
 
 ## Get the package manager used by the current Linux distribution
 PACKAGE_MANAGER=$(ddistro 3)

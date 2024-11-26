@@ -4,10 +4,6 @@
 # Prevent shellcheck warnings for sourcing potentially non-existent files
 # shellcheck source=/dev/null
 
-## Source reusable functions from functionrc
-## This ensures that any functions defined in functionrc are available in this shell environment
-
-
 ## Get the package manager used by the current Linux distribution
 PACKAGE_MANAGER=$(ddistro 3)
 
@@ -107,13 +103,13 @@ fi
 # Load additional aliases based on detected package manager
 case "${PACKAGE_MANAGER}" in
     apt | apt-get ) 
-        source /etc/bash.bashrc.d/lib/alias-debian
+        source ${BASE_PATH}/lib/alias-debian
         ;;
     yum | dnf | rpm ) 
-        source /etc/bash.bashrc.d/lib/alias-yum
+        source ${BASE_PATH}/lib/alias-yum
         ;;
     zypper ) 
-        source /etc/bash.bashrc.d/lib/alias-suse
+        source ${BASE_PATH}/lib/alias-suse
         ;;
 esac 
 
@@ -125,7 +121,7 @@ alias rbash='echo "try restricted-bash"'
 alias opt='cd /opt'
 alias dl='cd ~/Downloads'
 alias doc='cd ~/Documents'
-alias bsh='cd /etc/bash.bashrc.d/'
+alias bsh='cd ${BASE_PATH}/'
 
 ## Tools for system management and process searching
 alias psgrep='ps aux | grep -v grep | grep '

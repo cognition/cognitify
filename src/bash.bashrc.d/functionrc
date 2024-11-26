@@ -2,22 +2,22 @@
 ## Ramon Brooker <rbrooker@aeo3.io>
 
 # shellcheck source=/dev/null
-if [[  -f lib/libAdminHelpers ]] ; then
-   source lib/libAdminHelpers
+if [[  -f ${BASE_PATH}/lib/libAdminHelpers ]] ; then
+   source ${BASE_PATH}/lib/libAdminHelpers
 fi
 
-if [[  -f lib/libCognitifyHelpers ]] ; then
-   source lib/libCognitifyHelpers
+if [[  -f ${BASE_PATH}/lib/libCognitifyHelpers ]] ; then
+   source ${BASE_PATH}/lib/libCognitifyHelpers
 fi
 
-if [[  -f lib/libContainerHelpers ]] ; then
-   source lib/libContainerHelpers
+if [[  -f ${BASE_PATH}/lib/libContainerHelpers ]] ; then
+   source ${BASE_PATH}/lib/libContainerHelpers
 fi
 
-if [[  -f lib/libDirectyHelpers ]] ; then
-   source lib/libDirectyHelpers
+if [[  -f ${BASE_PATH}/lib/libDirectyHelpers ]] ; then
+   source ${BASE_PATH}/lib/libDirectyHelpers
 fi
 
-if [[  -f lib/libFileSearchIterateExecuteHelpers ]] ; then
-   source lib/libFileSearchIterateExecuteHelpers
+if [[  -f ${BASE_PATH}/lib/libFileSearchIterateExecuteHelpers ]] ; then
+   source ${BASE_PATH}/lib/libFileSearchIterateExecuteHelpers
 fi

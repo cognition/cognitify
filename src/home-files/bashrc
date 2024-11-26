@@ -1,19 +1,21 @@
 ## (C) 2024
 ## Ramon Brooker <rbrooker@aeo3.io>
 
+BASE_PATH="/etc/bash.bashrc.d"
+
 if [[ -f ~/.over-write ]]; then 
 	source ~/.over-write
 fi 
 
 
 # shellcheck source=/dev/null
-if [[ -f /etc/bash.bashrc.d/bashrc_file ]]; then
-    source /etc/bash.bashrc.d/bashrc_file
+if [[ -f ${BASE_PATH}/bashrc_file ]]; then
+    source ${BASE_PATH}/bashrc_file
 fi
 
 
 # shellcheck source=/dev/null
-if [[ -f /etc/bash.bashrc.d/last-line ]]; then
-    source /etc/bash.bashrc.d/last-line
+if [[ -f ${BASE_PATH}/last-line ]]; then
+    source ${BASE_PATH}/last-line
 fi
 

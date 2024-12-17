@@ -9,7 +9,7 @@
 #   $1 - The note to add.
 note_addition() {
     # Echo the note and current date and time into a file
-    echo "${1} -- $(date +"%a %b %d %Y - %X")" >> /etc/bash.bashrc.d/added
+    echo "${1} -- $(date +"%a %b %d %Y - %X")" >> ${BASE_PATH}/added
 }
 
 # Function: stub_script

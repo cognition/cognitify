@@ -1,0 +1,45 @@
+#!/bin/bash
+
+# --- Validate input ---
+if [[ -z "$1" ]]; then
+    echo "Usage: $0 <profile-name>"
+    echo "Creates ~/bin/opera-<profile-name> to launch Opera with a separate user profile."
+    exit 1
+fi
+
+PROFILE_NAME="$1"
+BIN_DIR="$HOME/bin"
+TARGET_SCRIPT="$BIN_DIR/opera-$PROFILE_NAME"
+
+# --- Check for Opera ---
+if ! command -v opera &> /dev/null; then
+    echo "⚠️  Opera is not currently installed or not in your PATH."
+
+    read -p "Do you want to create the shortcut anyway? (y/N): " CONFIRM
+    case "$CONFIRM" in
+        y|Y)
+            echo "Proceeding to create the shortcut anyway..."
+            ;;
+        *)
+            echo "Aborting."
+            exit 2
+            ;;
+    esac
+fi
+
+# --- Ensure ~/bin exists ---
+mkdir -p "$BIN_DIR"
+
+# --- Create the script ---
+cat > "$TARGET_SCRIPT" <<EOF
+#!/bin/bash
+
+## Open Opera using a separate profile directory
+opera --user-data-dir=\$HOME/.config/opera-${PROFILE_NAME} >> /dev/null 2>&1 &
+EOF
+
+chmod +x "$TARGET_SCRIPT"
+
+echo "✅ Shortcut created: $TARGET_SCRIPT"
+echo "You can run it with:"
+echo "   $TARGET_SCRIPT"

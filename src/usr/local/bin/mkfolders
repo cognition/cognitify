@@ -1,0 +1,19 @@
+#!/bin/bash 
+
+# Check if a file is passed as an argument
+if [ -z "$1" ]; then
+    echo "Usage: $0 <filename>"
+    exit 1
+fi
+
+# Read each line from the file and iterate over it
+while IFS= read -r line; do
+    # Process the string (for example, print each string)
+    echo "Processing: $line"
+    # shellcheck disable=SC1009
+    if [[ ! -d ${PWD}/${line} ]]; then 
+        mkdir ${PWD}/${line} 
+    fi 
+
+
+done < "$1"

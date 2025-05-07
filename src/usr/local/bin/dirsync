@@ -1,0 +1,171 @@
+#!/bin/bash
+
+# ----------------------------------------------------------------------------
+# Robust rsync wrapper for safe, resumable file transfers.
+# - Auto-creates destination directory if needed
+# - Respects include/exclude rules from a config file
+# - Supports dry run, logging, timestamped logs
+# ----------------------------------------------------------------------------
+
+SOURCE=""
+DEST=""
+LOGFILE=""
+DRY_RUN=false
+KEEP_SOURCE=false
+RULE_FILE=""
+RSYNC_INCLUDE=()
+RSYNC_EXCLUDE=()
+max_chars=140
+
+show_help() {
+    echo ""
+    echo "USAGE:"
+    echo "  $0 /source/path /dest/path"
+    echo "  $0 --source /src --dest /dst [options]"
+    echo ""
+    echo "OPTIONS:"
+    echo "  -s, --source        Source directory"
+    echo "  -d, --dest          Destination directory (created if missing)"
+    echo "  -l, --log FILE      Log output to FILE (timestamped)"
+    echo "  -r, --rules FILE    Path to include/exclude rule file"
+    echo "  -n, --dry-run       Simulate only (no changes)"
+    echo "  -k, --keep-source   Do NOT delete source files after sync"
+    echo "  -h, --help          Show this help message"
+    echo ""
+    exit 0
+}
+
+parse_rules() {
+    local section=""
+    while IFS= read -r line || [ -n "$line" ]; do
+        line=$(echo "$line" | sed 's/^\s*//;s/\s*$//')  # Trim
+        if [[ "$line" == "[exclude]" ]]; then
+            section="exclude"
+        elif [[ "$line" == "[include]" ]]; then
+            section="include"
+        elif [[ -n "$line" && ! "$line" =~ ^# ]]; then
+            if [[ "$section" == "include" ]]; then
+                RSYNC_INCLUDE+=(--include="$line")
+            elif [[ "$section" == "exclude" ]]; then
+                RSYNC_EXCLUDE+=(--exclude="$line")
+            fi
+        fi
+    done < "$RULE_FILE"
+
+    # Handle mutual exclusivity logic
+    if [[ ${#RSYNC_INCLUDE[@]} -gt 0 && ${#RSYNC_EXCLUDE[@]} -eq 0 ]]; then
+        RSYNC_EXCLUDE+=(--exclude="*")
+    fi
+}
+
+timestamp() {
+    date "+[%Y-%m-%d %H:%M:%S]"
+}
+
+log() {
+    echo "$(timestamp) $*"
+}
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        -s|--source)
+            SOURCE="$2"
+            shift 2
+            ;;
+        -d|--dest)
+            DEST="$2"
+            shift 2
+            ;;
+        -l|--log)
+            LOGFILE="$2"
+            shift 2
+            ;;
+        -r|--rules)
+            RULE_FILE="$2"
+            shift 2
+            ;;
+        -n|--dry-run)
+            DRY_RUN=true
+            shift
+            ;;
+        -k|--keep-source)
+            KEEP_SOURCE=true
+            shift
+            ;;
+        -h|--help)
+            show_help
+            ;;
+        *)
+            if [[ -z "$SOURCE" ]]; then
+                SOURCE="$1"
+            elif [[ -z "$DEST" ]]; then
+                DEST="$1"
+            else
+                echo "Unknown argument: $1"
+                show_help
+            fi
+            shift
+            ;;
+    esac
+done
+
+if [[ -z "$SOURCE" || -z "$DEST" ]]; then
+    echo "Error: You must specify both source and destination."
+    show_help
+fi
+
+if [[ ! -d "$SOURCE" ]]; then
+    echo "Error: Source '$SOURCE' is not a directory."
+    exit 1
+fi
+
+if [[ ! -d "$DEST" ]]; then
+    log "Creating destination: $DEST"
+    mkdir -p "$DEST" || { echo "Failed to create destination."; exit 1; }
+fi
+
+# Setup logging
+if [[ -n "$LOGFILE" ]]; then
+    LOGDIR=$(dirname "$LOGFILE")
+    mkdir -p "$LOGDIR"
+    exec > >(tee -a "$LOGFILE") 2>&1
+    log "Logging to $LOGFILE"
+fi
+
+# Parse rule file
+if [[ -n "$RULE_FILE" && -f "$RULE_FILE" ]]; then
+    parse_rules
+    log "Include/Exclude rules parsed from $RULE_FILE"
+fi
+
+# rsync options
+RSYNC_OPTS=(
+    --archive
+    --safe-links
+    --acls
+    --xattrs
+    --prune-empty-dirs
+    --progress
+    --human-readable
+    --partial
+    --inplace
+)
+
+$KEEP_SOURCE || RSYNC_OPTS+=(--remove-source-files)
+$DRY_RUN && RSYNC_OPTS+=(--dry-run)
+
+log "Starting sync..."
+log "From: $SOURCE"
+log "To:   $DEST"
+$DRY_RUN && log "Mode: Dry Run"
+$KEEP_SOURCE && log "Mode: Keep Source Files"
+
+rsync "${RSYNC_OPTS[@]}" "${RSYNC_INCLUDE[@]}" "${RSYNC_EXCLUDE[@]}" "$SOURCE" "$DEST"
+STATUS=$?
+
+if [[ $STATUS -eq 0 ]]; then
+    log "✅ Sync completed successfully."
+else
+    log "⚠️  Sync failed with code $STATUS"
+    exit $STATUS
+fi

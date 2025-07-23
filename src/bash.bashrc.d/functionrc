@@ -21,3 +21,8 @@ fi
 if [[  -f ${BASE_PATH}/lib/libFileSearchIterateExecuteHelpers ]] ; then
    source ${BASE_PATH}/lib/libFileSearchIterateExecuteHelpers
 fi
+
+
+if [[  -f ${BASE_PATH}/lib/pythonHelpers ]] ; then
+   source ${BASE_PATH}/lib/pythonHelpers
+fi

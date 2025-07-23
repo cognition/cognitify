@@ -3,13 +3,20 @@
 ## (C) 2024
 ## Ramon Brooker <rbrooker@aeo3.io>
 
+# Function: note_addition
+# This function appends a note with a timestamp to a specific file.
+# Parameters:
+#   $1 - The note to add.
+note_addition() {
+    # Echo the note and current date and time into a file
+    echo "${1} -- $(date +"%a %b %d %Y - %X")" >> ${BASE_PATH}/added
+}
 
-
-# Function: stub-script
+# Function: stub_script
 # This function creates a shell script template with executable permissions.
 # Parameters:
 #   $1 - The name of the script (without .sh extension).
-stub-script() {
+stub_script() {
     # Check if no parameter is provided, if so, display usage message
     if [[ -z ${1} ]]; then
         echo "This function requires a name as a parameter"

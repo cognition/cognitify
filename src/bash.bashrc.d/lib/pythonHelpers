@@ -1,0 +1,14 @@
+# Python Helpers 
+#
+#
+#
+
+
+function setpyenv() {
+  env_dir="${2:-venv}"
+  echo "setup python env" 
+    /usr/bin/python3.11 -m venv --clear --prompt "${1}" "${env_dir}"
+    source ${env_dir}/bin/activate 
+    pip install pip --upgrade 
+}
+

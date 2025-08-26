@@ -88,3 +88,10 @@ function user-exists {
 #     # List directory contents to verify sudoers changes are applied
 #     sudo ls  
 # }
+#
+
+
+function serpapi-status {
+    echo "SerpApi Status"
+    curl https://serpapi.com/account?api_key="${SERPAPI_KEY}"
+}

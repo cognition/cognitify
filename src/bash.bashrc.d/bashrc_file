@@ -106,7 +106,7 @@ if ! shopt -oq posix; then
 fi
 
 
-eval "$(register-python-argcomplete your_script.py)"
+
 
 
 ## Local Over ride file to over ride anything from standard

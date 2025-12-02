@@ -4,6 +4,7 @@
 
 # Source environment variables and color definitions
 source /etc/environment
+IS_WSL=${IS_WSL:-FALSE}
 source ${BASE_PATH}/lib/cognitifyColours
 
 # If user-specific override file exists, source it to apply user preferences

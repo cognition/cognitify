@@ -1,169 +1,230 @@
-#!/bin/bash
-## (C) 2024
-## Ramon Brooker <rbrooker@aeo3.io>
+#!/usr/bin/env bash
+set -euo pipefail
 
-# Define source directories
-SRC_DIR="src/bash.bashrc.d"
-HOME_FILES_SRC="src/home-files"
-COMPLETIONS_SRC="src/completions"
-PACKAGES_DIR="src/packages"
+# Cognitify installer
+# (C) 2024 Ramon Brooker <rbrooker@aeo3.io>
 
-# Define destination directories
-DEST_DIR="/etc"
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+SRC_DIR="$ROOT_DIR/src"
+CONFIG_SRC="$SRC_DIR/bash.bashrc.d"
+HOME_FILES_SRC="$SRC_DIR/home-files"
+COMPLETIONS_SRC="$SRC_DIR/completions"
+PACKAGES_DIR="$SRC_DIR/packages"
+
+CONFIG_DEST="/etc/bash.bashrc.d"
 COMPLETIONS_DEST="/etc/bash_completion.d"
-USER_HOME="$HOME"
-
-# Group name
 GROUP_NAME="cognitify"
+TARGET_USER="${SUDO_USER:-${USER}}"
+INCLUDE_GUI=false
+SKIP_PACKAGES=false
 
-# Function to determine the distro name
-get_distro() {
-    if [ -f /etc/os-release ]; then
-        . /etc/os-release
-        echo "$ID"
-    elif command -v lsb_release >/dev/null 2>&1; then
-        lsb_release -si | tr '[:upper:]' '[:lower:]'
-    else
-        uname -s | tr '[:upper:]' '[:lower:]'
+usage() {
+    cat <<USAGE
+Usage: sudo bin/install.sh [options]
+
+Options:
+  --user <name>        Install dotfiles for a specific user (default: ${TARGET_USER}).
+  --include-gui        Install GUI-related packages when available for the distro.
+  --skip-packages      Skip package installation entirely.
+  -h, --help           Show this help message.
+USAGE
+}
+
+log() { printf "[cognitify] %s\n" "$*"; }
+error() { printf "[cognitify] ERROR: %s\n" "$*" >&2; }
+
+require_root() {
+    if [[ $EUID -ne 0 ]]; then
+        error "This installer must be run as root (try again with sudo)."
+        exit 1
     fi
 }
 
-# Get the current distribution name
-DISTRO=$(get_distro)
+parse_args() {
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --user)
+                TARGET_USER="$2"
+                shift 2
+                ;;
+            --include-gui)
+                INCLUDE_GUI=true
+                shift
+                ;;
+            --skip-packages)
+                SKIP_PACKAGES=true
+                shift
+                ;;
+            -h|--help)
+                usage
+                exit 0
+                ;;
+            *)
+                usage
+                exit 1
+                ;;
+        esac
+    done
+}
 
-echo "Detected distribution: $DISTRO"
-
-# Check if the package list file for the distro exists
-PACKAGE_FILE="$PACKAGES_DIR/$DISTRO-packages.txt"
-if [ ! -f "$PACKAGE_FILE" ]; then
-    echo "Warning: Package list for distribution '$DISTRO' not found. Continuing without package installation."
-else
-    # Install packages listed in the distribution-specific file
-    echo "Installing packages listed in '$PACKAGE_FILE'..."
-    if command -v apt-get >/dev/null 2>&1; then
-        xargs -a "$PACKAGE_FILE" sudo apt-get install -y
-    elif command -v yum >/dev/null 2>&1; then
-        xargs -a "$PACKAGE_FILE" sudo yum install -y
-    elif command -v dnf >/dev/null 2>&1; then
-        xargs -a "$PACKAGE_FILE" sudo dnf install -y
-    elif command -v zypper >/dev/null 2>&1; then
-        xargs -a "$PACKAGE_FILE" sudo zypper install -y
-    else
-        echo "Error: Package manager not supported on this system."
-        exit 1
-    fi
-fi
-
-# Check and prepare directories
-if [ ! -d "$SRC_DIR" ]; then
-    echo "Error: Source directory '$SRC_DIR' does not exist."
-    exit 1
-fi
-
-if [ ! -d "$HOME_FILES_SRC" ]; then
-    echo "Error: Source directory '$HOME_FILES_SRC' does not exist."
-    exit 1
-fi
-
-if [ ! -d "$COMPLETIONS_SRC" ]; then
-    echo "Error: Source directory '$COMPLETIONS_SRC' does not exist."
-    exit 1
-fi
-
-# Create group if it doesn't exist
-if ! getent group "$GROUP_NAME" >/dev/null; then
-    echo "Creating group '$GROUP_NAME'..."
-    if ! groupadd "$GROUP_NAME"; then
-        echo "Error: Failed to create group '$GROUP_NAME'."
-        exit 1
-    fi
-else
-    echo "Group '$GROUP_NAME' already exists."
-fi
-
-# Add the current user to the group
-USER=$(whoami)
-echo "Adding user '$USER' to group '$GROUP_NAME'..."
-if ! usermod -aG "$GROUP_NAME" "$USER"; then
-    echo "Error: Failed to add user '$USER' to group '$GROUP_NAME'."
-    exit 1
-fi
-
-# Make necessary directories if they do not exist
-DEST_PATH="$DEST_DIR/$SRC_DIR"
-if [ ! -d "$DEST_PATH" ]; then
-    echo "Creating directory '$DEST_PATH'..."
-    if ! mkdir -p "$DEST_PATH"; then
-        echo "Error: Failed to create directory '$DEST_PATH'."
-        exit 1
-    fi
-fi
-
-if [ ! -d "$COMPLETIONS_DEST" ]; then
-    echo "Creating directory '$COMPLETIONS_DEST'..."
-    if ! mkdir -p "$COMPLETIONS_DEST"; then
-        echo "Error: Failed to create directory '$COMPLETIONS_DEST'."
-        exit 1
-    fi
-fi
-
-# Copy files from the source directory to the destination directory
-echo "Copying files from '$SRC_DIR' to '$DEST_PATH'..."
-if ! cp -R "$SRC_DIR/" "$DEST_PATH"; then
-    echo "Error: Failed to copy files."
-    exit 1
-fi
-
-# Set ownership to root:cognitify and permissions to group read/write
-echo "Setting directory ownership and permissions..."
-if ! chown -R root:"$GROUP_NAME" "$DEST_PATH"; then
-    echo "Error: Failed to set ownership."
-    exit 1
-fi
-
-if ! chmod -R 775 "$DEST_PATH"; then
-    echo "Error: Failed to set permissions."
-    exit 1
-fi
-
-# Copy completion files to the /etc/bash_completion.d/ directory
-echo "Copying completion files from '$COMPLETIONS_SRC' to '$COMPLETIONS_DEST'..."
-if ! cp -R "$COMPLETIONS_SRC/." "$COMPLETIONS_DEST"; then
-    echo "Error: Failed to copy completion files."
-    exit 1
-fi
-
-# Copy home-files to the current user's home directory
-echo "Processing files from '$HOME_FILES_SRC' to '$USER_HOME'..."
-
-for file in "$HOME_FILES_SRC"/*; do
-    # Extract the filename and add the dot prefix
-    filename=$(basename "$file")
-    hidden_filename=".$filename"
-    dest_file="$USER_HOME/$hidden_filename"
-    
-    # Check if the destination file exists
-    if [ -f "$dest_file" ]; then
-        echo "File '$hidden_filename' already exists in your home directory."
-
-        # Prompt for confirmation
-        read -p "Do you want to overwrite it? (y/n) (Backup original as .orig): " choice
-
-        if [[ "$choice" == "y" || "$choice" == "Y" ]]; then
-            # Backup the original file
-            cp "$dest_file" "${dest_file}.orig"
-            echo "Original file backed up as '${dest_file}.orig'."
-            
-            # Copy the new file
-            cp "$file" "$dest_file"
-            echo "File '$hidden_filename' has been overwritten."
-        else
-            echo "Skipped overwriting '$hidden_filename'."
+assert_paths() {
+    for path in "$CONFIG_SRC" "$HOME_FILES_SRC" "$COMPLETIONS_SRC"; do
+        if [[ ! -d $path ]]; then
+            error "Required directory missing: $path"
+            exit 1
         fi
-    else
-        cp "$file" "$dest_file"
-        echo "File '$hidden_filename' has been copied."
-    fi
-done
+    done
+}
 
-echo "Installation completed successfully."
+get_pkg_manager() {
+    if command -v apt-get >/dev/null 2>&1; then
+        echo "apt-get"
+    elif command -v dnf >/dev/null 2>&1; then
+        echo "dnf"
+    elif command -v yum >/dev/null 2>&1; then
+        echo "yum"
+    elif command -v zypper >/dev/null 2>&1; then
+        echo "zypper"
+    else
+        echo ""
+    fi
+}
+
+read_packages() {
+    local file="$1"
+    [[ -f $file ]] || return 0
+    awk 'NF && $1 !~ /^#/ { for (i = 1; i <= NF; ++i) if ($i !~ /^#/) print $i }' "$file"
+}
+
+collect_packages() {
+    local manager="$1"
+    local manager_file=""
+    case "$manager" in
+        apt-get)
+            manager_file="$PACKAGES_DIR/PACKAGES_APT"
+            ;;
+        yum|dnf)
+            manager_file="$PACKAGES_DIR/PACKAGES_YUM"
+            ;;
+        zypper)
+            manager_file="$PACKAGES_DIR/PACKAGES_ZYPPER"
+            ;;
+    esac
+
+    local -a packages=()
+    while IFS= read -r pkg; do packages+=("$pkg"); done < <(read_packages "$PACKAGES_DIR/GENERAL")
+    if $INCLUDE_GUI; then
+        while IFS= read -r pkg; do packages+=("$pkg"); done < <(read_packages "$PACKAGES_DIR/GENERAL_GUI")
+    fi
+    if [[ -n $manager_file ]]; then
+        while IFS= read -r pkg; do packages+=("$pkg"); done < <(read_packages "$manager_file")
+    fi
+
+    printf '%s\n' "${packages[@]}"
+}
+
+install_packages() {
+    $SKIP_PACKAGES && { log "Skipping package installation."; return; }
+
+    local manager
+    manager=$(get_pkg_manager)
+    if [[ -z $manager ]]; then
+        log "No supported package manager detected; skipping package installation."
+        return
+    fi
+
+    mapfile -t packages < <(collect_packages "$manager")
+    if [[ ${#packages[@]} -eq 0 ]]; then
+        log "No packages defined for manager '$manager'."
+        return
+    fi
+
+    log "Installing packages using $manager..."
+    case "$manager" in
+        apt-get)
+            apt-get update
+            DEBIAN_FRONTEND=noninteractive apt-get install -y "${packages[@]}"
+            ;;
+        yum)
+            yum install -y "${packages[@]}"
+            ;;
+        dnf)
+            dnf install -y "${packages[@]}"
+            ;;
+        zypper)
+            zypper --non-interactive install --auto-agree-with-licenses "${packages[@]}"
+            ;;
+    esac
+}
+
+ensure_group() {
+    if ! getent group "$GROUP_NAME" >/dev/null; then
+        log "Creating group $GROUP_NAME"
+        groupadd "$GROUP_NAME"
+    else
+        log "Group $GROUP_NAME already exists"
+    fi
+}
+
+ensure_user_in_group() {
+    if id -nG "$TARGET_USER" | grep -qw "$GROUP_NAME"; then
+        log "User $TARGET_USER already in group $GROUP_NAME"
+    else
+        log "Adding $TARGET_USER to group $GROUP_NAME"
+        usermod -aG "$GROUP_NAME" "$TARGET_USER"
+    fi
+}
+
+install_configs() {
+    install -d -m 775 -o root -g "$GROUP_NAME" "$CONFIG_DEST"
+    cp -R "$CONFIG_SRC/." "$CONFIG_DEST/"
+    chown -R root:"$GROUP_NAME" "$CONFIG_DEST"
+    chmod -R 775 "$CONFIG_DEST"
+    log "Installed bash configuration into $CONFIG_DEST"
+}
+
+install_completions() {
+    install -d -m 755 "$COMPLETIONS_DEST"
+    find "$COMPLETIONS_SRC" -maxdepth 1 -type f -print0 | while IFS= read -r -d '' file; do
+        install -m 644 "$file" "$COMPLETIONS_DEST/"
+    done
+    log "Installed shell completions into $COMPLETIONS_DEST"
+}
+
+install_home_files() {
+    local user_home
+    user_home=$(getent passwd "$TARGET_USER" | cut -d: -f6)
+    if [[ -z $user_home || ! -d $user_home ]]; then
+        error "Unable to resolve home directory for user $TARGET_USER"
+        exit 1
+    fi
+
+    for file in "$HOME_FILES_SRC"/*; do
+        local base dest
+        base=".$(basename "$file")"
+        dest="$user_home/$base"
+
+        if [[ -e $dest && ! -e ${dest}.orig ]]; then
+            cp "$dest" "${dest}.orig"
+            log "Backed up existing $base to ${base}.orig"
+        fi
+        cp "$file" "$dest"
+        chown "$TARGET_USER":"$TARGET_USER" "$dest"
+    done
+    log "Installed dotfiles into $user_home"
+}
+
+main() {
+    parse_args "$@"
+    require_root
+    assert_paths
+    install_packages
+    ensure_group
+    ensure_user_in_group
+    install_configs
+    install_completions
+    install_home_files
+    log "Installation completed successfully."
+}
+
+main "$@"

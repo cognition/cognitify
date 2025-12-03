@@ -26,7 +26,7 @@ BIN_SRC ?= $(SRC_DIR)/usr/local/bin
 DISTRO_FILES_SRC ?= $(SRC_DIR)/distro-files
 # Allow ROOT=1 to override INSTALL_USER (even if set in config.mk)
 ifeq ($(ROOT),1)
-INSTALL_USER := root
+override INSTALL_USER := root
 else
 INSTALL_USER ?= $(shell whoami)
 endif
@@ -78,8 +78,8 @@ install: check-root all install-config install-completions install-home install-
 	@echo "$(GREEN)[cognitify]$(NC) Installed for user: $(INSTALL_USER)"
 	@echo "$(GREEN)[cognitify]$(NC) Please log out and log back in for changes to take effect"
 
-install-root: ROOT=1 ## Install for root user (alias for: make install ROOT=1)
-install-root: install
+install-root: ## Install for root user (alias for: make install ROOT=1)
+	$(MAKE) install ROOT=1
 
 install-config: check-root ## Install bash configuration files
 	@echo "$(GREEN)[cognitify]$(NC) Installing configuration files..."

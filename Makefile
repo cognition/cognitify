@@ -34,7 +34,7 @@ GREEN := \033[0;32m
 YELLOW := \033[0;33m
 NC := \033[0m # No Colour
 
-.PHONY: help all install install-config install-completions install-home install-bin install-distro post-install clean uninstall check-root
+.PHONY: help all install install-config install-completions install-home install-bin install-docs install-man install-distro post-install clean uninstall check-root
 
 help: ## Show this help message
 	@echo "Cognitify Build System"
@@ -66,7 +66,7 @@ check-root: ## Check if running as root (for install targets)
 		exit 1; \
 	fi
 
-install: check-root all install-config install-completions install-home install-bin install-distro post-install ## Install all components
+install: check-root all install-config install-completions install-home install-bin install-distro install-docs install-man post-install ## Install all components
 	@echo ""
 	@echo "$(GREEN)[cognitify]$(NC) Installation completed successfully!"
 	@echo "$(GREEN)[cognitify]$(NC) Version $(VERSION) installed"
@@ -140,6 +140,31 @@ install-bin: check-root ## Install user binaries
 			install -m 755 "$$file" "$(PREFIX)/bin/"; \
 		done
 	@echo "$(GREEN)[cognitify]$(NC) Binaries installed to $(PREFIX)/bin"
+
+install-docs: check-root ## Install documentation
+	@echo "$(GREEN)[cognitify]$(NC) Installing documentation..."
+	@if [ ! -d "docs" ]; then
+		echo "$(YELLOW)Warning: Documentation directory not found$(NC)" >&2
+		exit 0
+	fi
+	@install -d -m 755 "$(PREFIX)/share/doc/cognitify"
+	@cp -r docs/* "$(PREFIX)/share/doc/cognitify/" 2>/dev/null || true
+	@find "$(PREFIX)/share/doc/cognitify" -type f -exec chmod 644 {} \;
+	@find "$(PREFIX)/share/doc/cognitify" -type d -exec chmod 755 {} \;
+	@echo "$(GREEN)[cognitify]$(NC) Documentation installed to $(PREFIX)/share/doc/cognitify"
+
+install-man: check-root ## Install man page
+	@echo "$(GREEN)[cognitify]$(NC) Installing man page..."
+	@if [ ! -f "man/man1/cognitify.1" ]; then
+		echo "$(YELLOW)Warning: Man page not found$(NC)" >&2
+		exit 0
+	fi
+	@install -d -m 755 "$(PREFIX)/share/man/man1"
+	@install -m 644 "man/man1/cognitify.1" "$(PREFIX)/share/man/man1/"
+	@if command -v mandb >/dev/null 2>&1; then
+		mandb -q >/dev/null 2>&1 || true
+	fi
+	@echo "$(GREEN)[cognitify]$(NC) Man page installed to $(PREFIX)/share/man/man1"
 
 install-distro: check-root ## Install distro-specific files
 	@echo "$(GREEN)[cognitify]$(NC) Installing distro-specific files..."

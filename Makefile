@@ -107,6 +107,7 @@ install-completions: check-root ## Install shell completions
 install-home: check-root ## Install user dotfiles
 	@echo "$(GREEN)[cognitify]$(NC) Installing home directory files..."
 	@HOME_DIR=$$(getent passwd "$(INSTALL_USER)" | cut -d: -f6); \
+	USER_GROUP=$$(id -gn "$(INSTALL_USER)" 2>/dev/null || echo "$(INSTALL_USER)"); \
 	if [ -z "$$HOME_DIR" ] || [ ! -d "$$HOME_DIR" ]; then \
 		echo "$(RED)Error: Unable to resolve home directory for user $(INSTALL_USER)$(NC)" >&2; \
 		exit 1; \
@@ -124,7 +125,7 @@ install-home: check-root ## Install user dotfiles
 			echo "$(GREEN)[cognitify]$(NC) Backed up existing $$base to $$base.orig"; \
 		fi; \
 		cp "$$file" "$$dest"; \
-		chown "$(INSTALL_USER):$(INSTALL_USER)" "$$dest"; \
+		chown "$(INSTALL_USER):$$USER_GROUP" "$$dest" 2>/dev/null || chown "$(INSTALL_USER)" "$$dest"; \
 	done; \
 	echo "$(GREEN)[cognitify]$(NC) Home files installed to $$HOME_DIR"
 
@@ -143,9 +144,9 @@ install-bin: check-root ## Install user binaries
 
 install-docs: check-root ## Install documentation
 	@echo "$(GREEN)[cognitify]$(NC) Installing documentation..."
-	@if [ ! -d "docs" ]; then
-		echo "$(YELLOW)Warning: Documentation directory not found$(NC)" >&2
-		exit 0
+	@if [ ! -d "docs" ]; then \
+		echo "$(YELLOW)Warning: Documentation directory not found$(NC)" >&2; \
+		exit 0; \
 	fi
 	@install -d -m 755 "$(PREFIX)/share/doc/cognitify"
 	@cp -r docs/* "$(PREFIX)/share/doc/cognitify/" 2>/dev/null || true
@@ -155,14 +156,14 @@ install-docs: check-root ## Install documentation
 
 install-man: check-root ## Install man page
 	@echo "$(GREEN)[cognitify]$(NC) Installing man page..."
-	@if [ ! -f "man/man1/cognitify.1" ]; then
-		echo "$(YELLOW)Warning: Man page not found$(NC)" >&2
-		exit 0
+	@if [ ! -f "man/man1/cognitify.1" ]; then \
+		echo "$(YELLOW)Warning: Man page not found$(NC)" >&2; \
+		exit 0; \
 	fi
 	@install -d -m 755 "$(PREFIX)/share/man/man1"
 	@install -m 644 "man/man1/cognitify.1" "$(PREFIX)/share/man/man1/"
-	@if command -v mandb >/dev/null 2>&1; then
-		mandb -q >/dev/null 2>&1 || true
+	@if command -v mandb >/dev/null 2>&1; then \
+		mandb -q >/dev/null 2>&1 || true; \
 	fi
 	@echo "$(GREEN)[cognitify]$(NC) Man page installed to $(PREFIX)/share/man/man1"
 

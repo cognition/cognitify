@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Cognitify post-installation script
 # Installs required packages using the detected package manager
-# (C) 2024 Ramon Brooker <rbrooker@aeo3.io>
+# (c) 2025 Ramon Brooker <rbrooker@aeo3.io>
 
 set -euo pipefail
 

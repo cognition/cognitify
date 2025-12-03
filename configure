@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Cognitify configure script
-# (C) 2024 Ramon Brooker <rbrooker@aeo3.io>
+# (c) 2025 Ramon Brooker <rbrooker@aeo3.io>
 
 set -e
 
@@ -83,6 +83,10 @@ parse_args() {
                 INSTALL_USER="$2"
                 shift 2
                 ;;
+            --root)
+                INSTALL_USER="root"
+                shift
+                ;;
             --include-gui)
                 INCLUDE_GUI="yes"
                 shift
@@ -90,6 +94,14 @@ parse_args() {
             --skip-packages)
                 SKIP_PACKAGES="yes"
                 shift
+                ;;
+            --distro-package=*)
+                DISTRO_PACKAGE="${1#*=}"
+                shift
+                ;;
+            --distro-package)
+                DISTRO_PACKAGE="$2"
+                shift 2
                 ;;
             --help|-h)
                 cat <<EOF
@@ -99,8 +111,10 @@ Options:
   --prefix=DIR          Installation prefix (default: /usr/local)
   --etc-dir=DIR          System configuration directory (default: /etc)
   --user=USER            User to install dotfiles for (default: current user)
+  --root                 Install dotfiles for root user (equivalent to --user=root)
   --include-gui          Include GUI packages in installation
   --skip-packages        Skip package installation
+  --distro-package=DISTRO Create distribution-specific package (e.g., rocky, ubuntu)
   --help, -h             Show this help message
 
 Environment variables:
@@ -187,5 +201,17 @@ EOF
 
 # Main
 parse_args "$@"
+
+# Handle distro packaging (must be after parse_args)
+if [[ -n "${DISTRO_PACKAGE:-}" ]]; then
+    if [[ ! -f "package-distro.sh" ]]; then
+        echo "Error: package-distro.sh not found" >&2
+        exit 1
+    fi
+    chmod +x package-distro.sh
+    ./package-distro.sh "$DISTRO_PACKAGE"
+    exit $?
+fi
+
 generate_config
 

@@ -1,5 +1,5 @@
 # Dockerfile for testing Cognitify on Fedora
-# (C) 2024 Ramon Brooker <rbrooker@aeo3.io>
+# (c) 2025 Ramon Brooker <rbrooker@aeo3.io>
 
 FROM fedora:latest
 

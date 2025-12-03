@@ -31,4 +31,4 @@ What the installer does:
 - Repository version is tracked in `version` and release notes live in `changelog/`.
 - Place machine- or user-specific overrides inside `private/` to keep them out of source control.
 
-(C) 2024 Ramon Brooker <rbrooker@aeo3.io>
+(c) 2025 Ramon Brooker <rbrooker@aeo3.io>

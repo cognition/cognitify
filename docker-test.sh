@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Helper script to build and test Cognitify Docker images
-# (C) 2024 Ramon Brooker <rbrooker@aeo3.io>
+# (c) 2025 Ramon Brooker <rbrooker@aeo3.io>
 
 set -e
 

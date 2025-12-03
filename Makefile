@@ -128,6 +128,7 @@ install-home: check-root ## Install user dotfiles
 			exit 0; \
 		fi; \
 		USER_COUNT=0; \
+		FAILED_COUNT=0; \
 		while IFS=: read -r username _ uid gid _ home_dir shell; do \
 			if [ -z "$$username" ] || [ -z "$$home_dir" ]; then \
 				continue; \
@@ -144,21 +145,37 @@ install-home: check-root ## Install user dotfiles
 			USER_COUNT=$$((USER_COUNT + 1)); \
 			echo "$(GREEN)[cognitify]$(NC) Installing for user: $$username ($$home_dir)"; \
 			USER_GROUP=$$(getent group "$$gid" | cut -d: -f1 2>/dev/null || echo "$$username"); \
+			USER_FAILED=0; \
 			for file in "$(HOME_FILES_SRC)"/*; do \
 				[ -f "$$file" ] || continue; \
 				base=".$$(basename "$$file")"; \
 				dest="$$home_dir/$$base"; \
 				if [ -e "$$dest" ] && [ ! -e "$$dest.orig" ]; then \
-					cp "$$dest" "$$dest.orig" 2>/dev/null || true; \
+					if ! cp "$$dest" "$$dest.orig" 2>/dev/null; then \
+						echo "$(YELLOW)Warning: Failed to backup $$base for user $$username$(NC)" >&2; \
+					fi; \
 				fi; \
-				cp "$$file" "$$dest" 2>/dev/null || true; \
-				chown "$$username:$$USER_GROUP" "$$dest" 2>/dev/null || chown "$$username" "$$dest" 2>/dev/null || true; \
+				if ! cp "$$file" "$$dest" 2>/dev/null; then \
+					echo "$(RED)Error: Failed to copy $$base to $$home_dir for user $$username$(NC)" >&2; \
+					USER_FAILED=1; \
+					continue; \
+				fi; \
+				if ! chown "$$username:$$USER_GROUP" "$$dest" 2>/dev/null && ! chown "$$username" "$$dest" 2>/dev/null; then \
+					echo "$(YELLOW)Warning: Failed to set ownership for $$base for user $$username$(NC)" >&2; \
+				fi; \
 			done; \
+			if [ "$$USER_FAILED" -eq 1 ]; then \
+				FAILED_COUNT=$$((FAILED_COUNT + 1)); \
+			fi; \
 		done < /etc/passwd; \
 		if [ "$$USER_COUNT" -eq 0 ]; then \
 			echo "$(YELLOW)Warning: No users found to install dotfiles for$(NC)" >&2; \
 		else \
-			echo "$(GREEN)[cognitify]$(NC) Home files installed for $$USER_COUNT user(s)"; \
+			if [ "$$FAILED_COUNT" -eq 0 ]; then \
+				echo "$(GREEN)[cognitify]$(NC) Home files installed successfully for $$USER_COUNT user(s)"; \
+			else \
+				echo "$(YELLOW)[cognitify]$(NC) Home files installed for $$USER_COUNT user(s) with $$FAILED_COUNT failure(s)"; \
+			fi; \
 		fi; \
 	else \
 		echo "$(GREEN)[cognitify]$(NC) Installing home directory files for user: $(INSTALL_USER)..."; \
@@ -291,4 +308,3 @@ uninstall: check-root ## Uninstall cognitify (removes files but keeps backups)
 		done; \
 	fi
 	@echo "$(GREEN)[cognitify]$(NC) Uninstall complete"
-

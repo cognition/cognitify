@@ -140,7 +140,7 @@ if [[ -x /usr/bin/netstat ]]; then
 
     # Listening TCP
     alias listening='netstat -napt | grep LISTEN'
-    # Listening on Localhost only TCO
+    # Listening on Localhost only TCP
     alias listening-l='sudo netstat -napt | grep -i LISTEN | grep 127.0.0.1'
 
     # Listening UDP
@@ -158,7 +158,7 @@ if [[ -x /usr/bin/ss ]]; then
 
     # Listening TCP
     alias listening='ss -napt | grep LISTEN'
-    # Listening on Localhost only TCO
+    # Listening on Localhost only TCP
     alias listening-l='sudo ss -napt | grep -i LISTEN | grep 127.0.0.1'
     # Listening UDP
     alias listening-u='ss -naptu | grep udp | grep LISTEN'

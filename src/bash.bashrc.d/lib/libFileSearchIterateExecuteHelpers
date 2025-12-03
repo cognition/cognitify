@@ -81,14 +81,20 @@ search_files() {
   fi
 
   # Perform the specified action on the results
-  for file in $files; do
+  # Use while loop with read to properly handle filenames with spaces
+  while IFS= read -r file || [ -n "$file" ]; do
+    [[ -z "$file" ]] && continue
     if [[ -n $execute_command ]]; then
-      # Replace '{}' with the current file name in the command
-      eval ${execute_command//\{\}/"$file"}
+      # Safely quote the file name to prevent command injection
+      local safe_file
+      printf -v safe_file '%q' "$file"
+      # Replace '{}' with the safely quoted file name in the command
+      local safe_cmd="${execute_command//\{\}/$safe_file}"
+      eval "$safe_cmd"
     else
       echo "$file"
     fi
-  done
+  done <<< "$files"
 }
 
 # Usage message

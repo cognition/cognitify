@@ -56,7 +56,7 @@ while [[ $# -gt 0 ]]; do
             show_help
             ;;
         *)
-            echo "Unknown option: $1"
+            echo "Unknown option: $1" >&2
             show_help
             ;;
     esac
@@ -69,16 +69,19 @@ if [ -n "$input_text" ]; then
 
 elif [ -n "$input_file" ]; then
     if [[ ! -f "$input_file" ]]; then
-        echo "Error: File not found: $input_file"
+        echo "Error: File not found: $input_file" >&2
         exit 1
     fi
-    content=$(<"$input_file")
+    if ! content=$(<"$input_file"); then
+        echo "Error: Failed to read file: $input_file" >&2
+        exit 1
+    fi
     echo "File: '$input_file'"
     show_count "$content"
 
 elif [ -n "$input_stanzas" ]; then
     if [[ ! -f "$input_stanzas" ]]; then
-        echo "Error: File not found: $input_stanzas"
+        echo "Error: File not found: $input_stanzas" >&2
         exit 1
     fi
     echo "Processing stanzas in: $input_stanzas"
@@ -93,6 +96,6 @@ elif [ -n "$input_stanzas" ]; then
     }' "$input_stanzas"
 
 else
-    echo "Error: You must provide --text, --file, or --stanzas"
+    echo "Error: You must provide --text, --file, or --stanzas" >&2
     show_help
 fi

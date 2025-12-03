@@ -15,7 +15,6 @@ KEEP_SOURCE=false
 RULE_FILE=""
 RSYNC_INCLUDE=()
 RSYNC_EXCLUDE=()
-max_chars=140
 
 show_help() {
     echo ""
@@ -101,7 +100,7 @@ while [[ $# -gt 0 ]]; do
             elif [[ -z "$DEST" ]]; then
                 DEST="$1"
             else
-                echo "Unknown argument: $1"
+                echo "Unknown argument: $1" >&2
                 show_help
             fi
             shift
@@ -110,18 +109,18 @@ while [[ $# -gt 0 ]]; do
 done
 
 if [[ -z "$SOURCE" || -z "$DEST" ]]; then
-    echo "Error: You must specify both source and destination."
+    echo "Error: You must specify both source and destination." >&2
     show_help
 fi
 
 if [[ ! -d "$SOURCE" ]]; then
-    echo "Error: Source '$SOURCE' is not a directory."
+    echo "Error: Source '$SOURCE' is not a directory." >&2
     exit 1
 fi
 
 if [[ ! -d "$DEST" ]]; then
     log "Creating destination: $DEST"
-    mkdir -p "$DEST" || { echo "Failed to create destination."; exit 1; }
+    mkdir -p "$DEST" || { echo "Error: Failed to create destination." >&2; exit 1; }
 fi
 
 # Setup logging

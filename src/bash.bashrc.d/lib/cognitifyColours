@@ -2,7 +2,8 @@
 ## Ramon Brooker <rbrooker@aeo3.io>
 
 # shellcheck source=/dev/null
-# shellcheck disable=SC2034 
+# Colour variables are exported for use in other scripts
+# shellcheck disable=SC2034  # Unused variables are exported for external use
 # ${COLOUR}
 ### Brackets
 COLOUR='\[\033'

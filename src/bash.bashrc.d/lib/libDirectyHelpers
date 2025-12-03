@@ -1,8 +1,9 @@
 # (C) 2024
 # Ramon Brooker <rbrooker@aeo3.io>
 
-# Define a function named 'list-empty-dirs'
-function list-empty-dirs {
+# Function: list-empty-dirs
+# Lists all empty directories in the current directory tree.
+list-empty-dirs() {
     # Use the 'find' command to search for directories
     # Starting from the current directory (.)
     # '-type d' restricts the search to directories
@@ -11,8 +12,9 @@ function list-empty-dirs {
     find . -type d -empty -print
 }
 
-# Define a function named 'del-empty-dirs'
-function del-empty-dirs {
+# Function: del-empty-dirs
+# Deletes all empty directories in the current directory tree.
+del-empty-dirs() {
     # Use the 'find' command as before to search for empty directories
     # '-delete' removes the directories that are found
     find . -type d -empty -delete

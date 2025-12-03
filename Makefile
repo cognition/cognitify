@@ -39,7 +39,7 @@ GREEN := \033[0;32m
 YELLOW := \033[0;33m
 NC := \033[0m # No Colour
 
-.PHONY: help all install install-root install-config install-completions install-home install-bin install-docs install-man install-distro post-install clean uninstall check-root
+.PHONY: help all install install-root install-all install-config install-completions install-home install-bin install-docs install-man install-distro post-install clean uninstall check-root
 
 help: ## Show this help message
 	@echo "Cognitify Build System"
@@ -75,11 +75,18 @@ install: check-root all install-config install-completions install-home install-
 	@echo ""
 	@echo "$(GREEN)[cognitify]$(NC) Installation completed successfully!"
 	@echo "$(GREEN)[cognitify]$(NC) Version $(VERSION) installed"
-	@echo "$(GREEN)[cognitify]$(NC) Installed for user: $(INSTALL_USER)"
+	@if [ "$(ALL)" = "1" ]; then \
+		echo "$(GREEN)[cognitify]$(NC) Installed for all users"; \
+	else \
+		echo "$(GREEN)[cognitify]$(NC) Installed for user: $(INSTALL_USER)"; \
+	fi
 	@echo "$(GREEN)[cognitify]$(NC) Please log out and log back in for changes to take effect"
 
 install-root: ## Install for root user (alias for: make install ROOT=1)
 	$(MAKE) install ROOT=1
+
+install-all: ## Install for all users (requires root, alias for: make install ALL=1)
+	$(MAKE) install ALL=1
 
 install-config: check-root ## Install bash configuration files
 	@echo "$(GREEN)[cognitify]$(NC) Installing configuration files..."
@@ -114,37 +121,78 @@ install-completions: check-root ## Install shell completions
 	@echo "$(GREEN)[cognitify]$(NC) Completions installed to $(COMPLETIONS_DEST)"
 
 install-home: check-root ## Install user dotfiles
-	@echo "$(GREEN)[cognitify]$(NC) Installing home directory files for user: $(INSTALL_USER)..."
-	@HOME_DIR=$$(getent passwd "$(INSTALL_USER)" | cut -d: -f6); \
-	if [ -z "$$HOME_DIR" ]; then \
-		if [ "$(INSTALL_USER)" = "root" ]; then \
-			HOME_DIR="/root"; \
+	@if [ "$(ALL)" = "1" ]; then \
+		echo "$(GREEN)[cognitify]$(NC) Installing home directory files for all users..."; \
+		if [ ! -d "$(HOME_FILES_SRC)" ]; then \
+			echo "$(YELLOW)Warning: Home files source not found: $(HOME_FILES_SRC)$(NC)" >&2; \
+			exit 0; \
+		fi; \
+		USER_COUNT=0; \
+		while IFS=: read -r username _ uid gid _ home_dir shell; do \
+			if [ -z "$$username" ] || [ -z "$$home_dir" ]; then \
+				continue; \
+			fi; \
+			if [ "$$uid" -lt 1000 ] && [ "$$username" != "root" ]; then \
+				continue; \
+			fi; \
+			if [ ! -d "$$home_dir" ]; then \
+				continue; \
+			fi; \
+			if [ "$$shell" = "/usr/sbin/nologin" ] || [ "$$shell" = "/sbin/nologin" ] || [ "$$shell" = "/bin/false" ]; then \
+				continue; \
+			fi; \
+			USER_COUNT=$$((USER_COUNT + 1)); \
+			echo "$(GREEN)[cognitify]$(NC) Installing for user: $$username ($$home_dir)"; \
+			USER_GROUP=$$(getent group "$$gid" | cut -d: -f1 2>/dev/null || echo "$$username"); \
+			for file in "$(HOME_FILES_SRC)"/*; do \
+				[ -f "$$file" ] || continue; \
+				base=".$$(basename "$$file")"; \
+				dest="$$home_dir/$$base"; \
+				if [ -e "$$dest" ] && [ ! -e "$$dest.orig" ]; then \
+					cp "$$dest" "$$dest.orig" 2>/dev/null || true; \
+				fi; \
+				cp "$$file" "$$dest" 2>/dev/null || true; \
+				chown "$$username:$$USER_GROUP" "$$dest" 2>/dev/null || chown "$$username" "$$dest" 2>/dev/null || true; \
+			done; \
+		done < /etc/passwd; \
+		if [ "$$USER_COUNT" -eq 0 ]; then \
+			echo "$(YELLOW)Warning: No users found to install dotfiles for$(NC)" >&2; \
 		else \
-			echo "$(RED)Error: Unable to resolve home directory for user $(INSTALL_USER)$(NC)" >&2; \
+			echo "$(GREEN)[cognitify]$(NC) Home files installed for $$USER_COUNT user(s)"; \
+		fi; \
+	else \
+		echo "$(GREEN)[cognitify]$(NC) Installing home directory files for user: $(INSTALL_USER)..."; \
+		HOME_DIR=$$(getent passwd "$(INSTALL_USER)" | cut -d: -f6); \
+		if [ -z "$$HOME_DIR" ]; then \
+			if [ "$(INSTALL_USER)" = "root" ]; then \
+				HOME_DIR="/root"; \
+			else \
+				echo "$(RED)Error: Unable to resolve home directory for user $(INSTALL_USER)$(NC)" >&2; \
+				exit 1; \
+			fi; \
+		fi; \
+		if [ ! -d "$$HOME_DIR" ]; then \
+			echo "$(RED)Error: Home directory does not exist: $$HOME_DIR$(NC)" >&2; \
 			exit 1; \
 		fi; \
-	fi; \
-	if [ ! -d "$$HOME_DIR" ]; then \
-		echo "$(RED)Error: Home directory does not exist: $$HOME_DIR$(NC)" >&2; \
-		exit 1; \
-	fi; \
-	USER_GROUP=$$(id -gn "$(INSTALL_USER)" 2>/dev/null || echo "$(INSTALL_USER)"); \
-	if [ ! -d "$(HOME_FILES_SRC)" ]; then \
-		echo "$(YELLOW)Warning: Home files source not found: $(HOME_FILES_SRC)$(NC)" >&2; \
-		exit 0; \
-	fi; \
-	for file in "$(HOME_FILES_SRC)"/*; do \
-		[ -f "$$file" ] || continue; \
-		base=".$$(basename "$$file")"; \
-		dest="$$HOME_DIR/$$base"; \
-		if [ -e "$$dest" ] && [ ! -e "$$dest.orig" ]; then \
-			cp "$$dest" "$$dest.orig"; \
-			echo "$(GREEN)[cognitify]$(NC) Backed up existing $$base to $$base.orig"; \
+		USER_GROUP=$$(id -gn "$(INSTALL_USER)" 2>/dev/null || echo "$(INSTALL_USER)"); \
+		if [ ! -d "$(HOME_FILES_SRC)" ]; then \
+			echo "$(YELLOW)Warning: Home files source not found: $(HOME_FILES_SRC)$(NC)" >&2; \
+			exit 0; \
 		fi; \
-		cp "$$file" "$$dest"; \
-		chown "$(INSTALL_USER):$$USER_GROUP" "$$dest" 2>/dev/null || chown "$(INSTALL_USER)" "$$dest"; \
-	done; \
-	echo "$(GREEN)[cognitify]$(NC) Home files installed to $$HOME_DIR"
+		for file in "$(HOME_FILES_SRC)"/*; do \
+			[ -f "$$file" ] || continue; \
+			base=".$$(basename "$$file")"; \
+			dest="$$HOME_DIR/$$base"; \
+			if [ -e "$$dest" ] && [ ! -e "$$dest.orig" ]; then \
+				cp "$$dest" "$$dest.orig"; \
+				echo "$(GREEN)[cognitify]$(NC) Backed up existing $$base to $$base.orig"; \
+			fi; \
+			cp "$$file" "$$dest"; \
+			chown "$(INSTALL_USER):$$USER_GROUP" "$$dest" 2>/dev/null || chown "$(INSTALL_USER)" "$$dest"; \
+		done; \
+		echo "$(GREEN)[cognitify]$(NC) Home files installed to $$HOME_DIR"; \
+	fi
 
 install-bin: check-root ## Install user binaries
 	@echo "$(GREEN)[cognitify]$(NC) Installing user binaries..."

@@ -19,6 +19,9 @@ scratch/
 ref/
 private/
 
+# Build system generated files
+config.mk
+
 
 
 

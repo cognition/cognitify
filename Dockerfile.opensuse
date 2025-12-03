@@ -1,0 +1,46 @@
+# Dockerfile for testing Cognitify on openSUSE
+# (C) 2024 Ramon Brooker <rbrooker@aeo3.io>
+
+FROM opensuse/leap:latest
+
+# Set environment variables
+ENV USERNAME=cognition
+
+# Install build dependencies and sudo
+RUN zypper --non-interactive install --auto-agree-with-licenses \
+        gcc \
+        make \
+        sudo \
+        git \
+        bash \
+        curl \
+        wget \
+        vim \
+        && \
+    zypper clean --all
+
+# Create the cognition user with sudo privileges
+RUN useradd -m -s /bin/bash ${USERNAME} && \
+    echo "${USERNAME} ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+
+# Set working directory
+WORKDIR /opt/cognitify
+
+# Copy the entire repository
+COPY . .
+
+# Ensure scripts are executable and configure
+RUN chmod +x configure post-install.sh && \
+    ./configure --user=${USERNAME} --skip-packages && \
+    make && \
+    sudo make install
+
+# Switch to cognition user
+USER ${USERNAME}
+
+# Set up environment
+WORKDIR /home/${USERNAME}
+
+# Drop into bash shell
+CMD ["/bin/bash", "-l"]
+

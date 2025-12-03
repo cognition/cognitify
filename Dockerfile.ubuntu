@@ -1,0 +1,48 @@
+# Dockerfile for testing Cognitify on Ubuntu
+# (C) 2024 Ramon Brooker <rbrooker@aeo3.io>
+
+FROM ubuntu:latest
+
+# Set environment variables
+ENV DEBIAN_FRONTEND=noninteractive
+ENV USERNAME=cognition
+
+# Install build dependencies and sudo
+RUN apt-get update && \
+    apt-get install -y \
+        build-essential \
+        make \
+        sudo \
+        git \
+        bash \
+        curl \
+        wget \
+        vim \
+        && \
+    rm -rf /var/lib/apt/lists/*
+
+# Create the cognition user with sudo privileges
+RUN useradd -m -s /bin/bash -G sudo ${USERNAME} && \
+    echo "${USERNAME} ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+
+# Set working directory
+WORKDIR /opt/cognitify
+
+# Copy the entire repository
+COPY . .
+
+# Ensure scripts are executable and configure
+RUN chmod +x configure post-install.sh && \
+    ./configure --user=${USERNAME} --skip-packages && \
+    make && \
+    sudo make install
+
+# Switch to cognition user
+USER ${USERNAME}
+
+# Set up environment
+WORKDIR /home/${USERNAME}
+
+# Drop into bash shell
+CMD ["/bin/bash", "-l"]
+

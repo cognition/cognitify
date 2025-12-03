@@ -23,5 +23,8 @@ private/
 config.mk
 
 
+# Ingore tarballs 
+*.tar.gz 
+
 
 

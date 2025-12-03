@@ -24,9 +24,9 @@ COMPLETIONS_SRC ?= $(SRC_DIR)/completions
 PACKAGES_DIR ?= $(SRC_DIR)/packages
 BIN_SRC ?= $(SRC_DIR)/usr/local/bin
 DISTRO_FILES_SRC ?= $(SRC_DIR)/distro-files
-# Allow ROOT=1 to override INSTALL_USER
+# Allow ROOT=1 to override INSTALL_USER (even if set in config.mk)
 ifeq ($(ROOT),1)
-INSTALL_USER ?= root
+INSTALL_USER := root
 else
 INSTALL_USER ?= $(shell whoami)
 endif

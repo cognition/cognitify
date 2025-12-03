@@ -1,4 +1,5 @@
+# openSUSE/SLES specific packages
+# Package names that differ from other distributions or are specific to zypper
+# (c) 2025 Ramon Brooker <rbrooker@aeo3.io>
 
-cockpit-system 
-
-
+cockpit-system

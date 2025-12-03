@@ -107,17 +107,16 @@ install-completions: check-root ## Install shell completions
 		exit 0; \
 	fi
 	@install -d -m 755 "$(COMPLETIONS_DEST)"
-	@find "$(COMPLETIONS_SRC)" -maxdepth 1 -type f -print0 | \
-		while IFS= read -r -d '' file; do \
-			install -m 644 "$$file" "$(COMPLETIONS_DEST)/"; \
-		done
+	@for file in "$(COMPLETIONS_SRC)"/*; do \
+		[ -f "$$file" ] || continue; \
+		install -m 644 "$$file" "$(COMPLETIONS_DEST)/"; \
+	done
 	@echo "$(GREEN)[cognitify]$(NC) Completions installed to $(COMPLETIONS_DEST)"
 
 install-home: check-root ## Install user dotfiles
 	@echo "$(GREEN)[cognitify]$(NC) Installing home directory files for user: $(INSTALL_USER)..."
 	@HOME_DIR=$$(getent passwd "$(INSTALL_USER)" | cut -d: -f6); \
 	if [ -z "$$HOME_DIR" ]; then \
-		# Fallback for root user if getent doesn't work
 		if [ "$(INSTALL_USER)" = "root" ]; then \
 			HOME_DIR="/root"; \
 		else \
@@ -154,10 +153,10 @@ install-bin: check-root ## Install user binaries
 		exit 0; \
 	fi
 	@install -d -m 755 "$(PREFIX)/bin"
-	@find "$(BIN_SRC)" -type f -executable -print0 | \
-		while IFS= read -r -d '' file; do \
-			install -m 755 "$$file" "$(PREFIX)/bin/"; \
-		done
+	@for file in "$(BIN_SRC)"/*; do \
+		[ -f "$$file" ] && [ -x "$$file" ] || continue; \
+		install -m 755 "$$file" "$(PREFIX)/bin/"; \
+	done
 	@echo "$(GREEN)[cognitify]$(NC) Binaries installed to $(PREFIX)/bin"
 
 install-docs: check-root ## Install documentation

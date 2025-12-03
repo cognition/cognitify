@@ -1,2 +1,24 @@
-bash-completion git ShellCheck cockpit cockpit-bridge sqlite3-devel sqlite3 tree unzip zip expect
-curl wget hwinfo jq fq dos2unix vim neovim openssh openssl pwgen rsync syntax-highlighting xfsdump xfsprogs 
+# General packages - common across all distributions
+# These packages have the same name across Debian/Ubuntu, RHEL/CentOS/Fedora/Rocky, and openSUSE/SLES
+# (c) 2025 Ramon Brooker <rbrooker@aeo3.io>
+
+bash-completion
+git
+cockpit
+cockpit-bridge
+sqlite3
+tree
+unzip
+zip
+expect
+curl
+wget
+hwinfo
+jq
+fq
+dos2unix
+vim
+neovim
+openssl
+pwgen
+rsync

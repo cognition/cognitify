@@ -1,2 +1,12 @@
-yakuake konsole kate kdeconnect krusader 
-dolphin kwrite gparted 
+# GUI packages - optional packages for graphical environments
+# These packages are installed when --include-gui flag is used
+# (c) 2025 Ramon Brooker <rbrooker@aeo3.io>
+
+yakuake
+konsole
+kate
+kdeconnect
+krusader
+dolphin
+kwrite
+gparted

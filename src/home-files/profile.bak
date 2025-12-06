@@ -23,13 +23,3 @@ if [ -x /usr/bin/fortune ] ; then
    /usr/bin/fortune
    echo
 fi
-
-# Source .bashrc for SSH logins and other login shells
-# This ensures cognitify configuration is available for all login sessions
-if [ -n "$BASH_VERSION" ]; then
-    # Include .bashrc if it exists
-    if [ -f "$HOME/.bashrc" ]; then
-        # shellcheck source=/dev/null
-        . "$HOME/.bashrc"
-    fi
-fi

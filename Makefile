@@ -24,6 +24,9 @@ COMPLETIONS_SRC ?= $(SRC_DIR)/completions
 PACKAGES_DIR ?= $(SRC_DIR)/packages
 BIN_SRC ?= $(SRC_DIR)/usr/local/bin
 DISTRO_FILES_SRC ?= $(SRC_DIR)/distro-files
+PROFILE_D_SRC ?= $(SRC_DIR)/profile.d
+PROFILE_D_DEST ?= $(ETC_DIR)/profile.d
+SKEL_DEST ?= $(ETC_DIR)/skel
 # Allow ROOT=1 to override INSTALL_USER (even if set in config.mk)
 ifeq ($(ROOT),1)
 override INSTALL_USER := root
@@ -39,7 +42,7 @@ GREEN := \033[0;32m
 YELLOW := \033[0;33m
 NC := \033[0m # No Colour
 
-.PHONY: help all install install-root install-all install-config install-completions install-home install-bin install-docs install-man install-distro post-install clean uninstall check-root
+.PHONY: help all install install-root install-all install-config install-completions install-home install-bin install-docs install-man install-distro install-profile-d install-skel post-install clean uninstall check-root
 
 help: ## Show this help message
 	@echo "Cognitify Build System"
@@ -71,7 +74,7 @@ check-root: ## Check if running as root (for install targets)
 		exit 1; \
 	fi
 
-install: check-root all install-config install-completions install-home install-bin install-distro install-docs install-man post-install ## Install all components
+install: check-root all install-config install-completions install-home install-bin install-distro install-docs install-man install-profile-d install-skel post-install ## Install all components
 	@echo ""
 	@echo "$(GREEN)[cognitify]$(NC) Installation completed successfully!"
 	@echo "$(GREEN)[cognitify]$(NC) Version $(VERSION) installed"
@@ -263,6 +266,36 @@ install-distro: check-root ## Install distro-specific files
 			fi \
 			;; \
 	esac
+
+install-profile-d: check-root ## Install system-wide profile.d snippet
+	@echo "$(GREEN)[cognitify]$(NC) Installing profile.d snippet..."
+	@if [ ! -d "$(PROFILE_D_SRC)" ]; then \
+		echo "$(YELLOW)Warning: Profile.d source not found: $(PROFILE_D_SRC)$(NC)" >&2; \
+		exit 0; \
+	fi
+	@install -d -m 755 "$(PROFILE_D_DEST)"
+	@for file in "$(PROFILE_D_SRC)"/*; do \
+		[ -f "$$file" ] || continue; \
+		install -m 644 "$$file" "$(PROFILE_D_DEST)/"; \
+		echo "$(GREEN)[cognitify]$(NC) Installed $$(basename "$$file") to $(PROFILE_D_DEST)"; \
+	done
+	@echo "$(GREEN)[cognitify]$(NC) Profile.d snippet installed to $(PROFILE_D_DEST)"
+
+install-skel: check-root ## Install dotfiles to /etc/skel for new users
+	@echo "$(GREEN)[cognitify]$(NC) Installing dotfiles to /etc/skel..."
+	@if [ ! -d "$(HOME_FILES_SRC)" ]; then \
+		echo "$(YELLOW)Warning: Home files source not found: $(HOME_FILES_SRC)$(NC)" >&2; \
+		exit 0; \
+	fi
+	@install -d -m 755 "$(SKEL_DEST)"
+	@for file in "$(HOME_FILES_SRC)"/*; do \
+		[ -f "$$file" ] || continue; \
+		base=".$$(basename "$$file")"; \
+		dest="$(SKEL_DEST)/$$base"; \
+		install -m 644 "$$file" "$$dest"; \
+		echo "$(GREEN)[cognitify]$(NC) Installed $$base to $(SKEL_DEST)"; \
+	done
+	@echo "$(GREEN)[cognitify]$(NC) Dotfiles installed to $(SKEL_DEST)"
 
 post-install: check-root ## Run post-installation script (package installation)
 	@if [ "$(SKIP_PACKAGES)" = "yes" ]; then \

@@ -20,6 +20,7 @@ COMPLETIONS_DEST ?= $(ETC_DIR)/bash_completion.d
 SRC_DIR ?= src
 CONFIG_SRC ?= $(SRC_DIR)/bash.bashrc.d
 HOME_FILES_SRC ?= $(SRC_DIR)/home-files
+HOME_FILES_EXTENDED_SRC ?= $(SRC_DIR)/home-files-extended
 COMPLETIONS_SRC ?= $(SRC_DIR)/completions
 COMPLETIONS_EXTENDED_SRC ?= $(SRC_DIR)/completions-extended
 PACKAGES_DIR ?= $(SRC_DIR)/packages
@@ -30,6 +31,7 @@ PROFILE_D_DEST ?= $(ETC_DIR)/profile.d
 SKEL_DEST ?= $(ETC_DIR)/skel
 DOCKER_MODE ?= no
 EXTENDED_COMPLETIONS ?= no
+EXTENDED_HOME_FILES ?= no
 # Allow ROOT=1 to override INSTALL_USER (even if set in config.mk)
 ifeq ($(ROOT),1)
 override INSTALL_USER := root
@@ -183,6 +185,26 @@ install-home: check-root ## Install user dotfiles
 					echo "$(YELLOW)Warning: Failed to set ownership for $$base for user $$username$(NC)" >&2; \
 				fi; \
 			done; \
+			if [ "$(EXTENDED_HOME_FILES)" = "yes" ] && [ -d "$(HOME_FILES_EXTENDED_SRC)" ]; then \
+				for file in "$(HOME_FILES_EXTENDED_SRC)"/*; do \
+					[ -f "$$file" ] || continue; \
+					base=".$$(basename "$$file")"; \
+					dest="$$home_dir/$$base"; \
+					if [ -e "$$dest" ] && [ ! -e "$$dest.orig" ]; then \
+						if ! cp "$$dest" "$$dest.orig" 2>/dev/null; then \
+							echo "$(YELLOW)Warning: Failed to backup $$base for user $$username$(NC)" >&2; \
+						fi; \
+					fi; \
+					if ! cp "$$file" "$$dest" 2>/dev/null; then \
+						echo "$(RED)Error: Failed to copy $$base to $$home_dir for user $$username$(NC)" >&2; \
+						USER_FAILED=1; \
+						continue; \
+					fi; \
+					if ! chown "$$username:$$USER_GROUP" "$$dest" 2>/dev/null && ! chown "$$username" "$$dest" 2>/dev/null; then \
+						echo "$(YELLOW)Warning: Failed to set ownership for $$base for user $$username$(NC)" >&2; \
+					fi; \
+				done; \
+			fi; \
 			if [ "$$USER_FAILED" -eq 1 ]; then \
 				FAILED_COUNT=$$((FAILED_COUNT + 1)); \
 			fi; \
@@ -227,6 +249,25 @@ install-home: check-root ## Install user dotfiles
 			cp "$$file" "$$dest"; \
 			chown "$(INSTALL_USER):$$USER_GROUP" "$$dest" 2>/dev/null || chown "$(INSTALL_USER)" "$$dest"; \
 		done; \
+		if [ "$(EXTENDED_HOME_FILES)" = "yes" ]; then \
+			if [ -d "$(HOME_FILES_EXTENDED_SRC)" ]; then \
+				echo "$(GREEN)[cognitify]$(NC) Installing extended home files..."; \
+				for file in "$(HOME_FILES_EXTENDED_SRC)"/*; do \
+					[ -f "$$file" ] || continue; \
+					base=".$$(basename "$$file")"; \
+					dest="$$HOME_DIR/$$base"; \
+					if [ -e "$$dest" ] && [ ! -e "$$dest.orig" ]; then \
+						cp "$$dest" "$$dest.orig"; \
+						echo "$(GREEN)[cognitify]$(NC) Backed up existing $$base to $$base.orig"; \
+					fi; \
+					cp "$$file" "$$dest"; \
+					chown "$(INSTALL_USER):$$USER_GROUP" "$$dest" 2>/dev/null || chown "$(INSTALL_USER)" "$$dest"; \
+					echo "$(GREEN)[cognitify]$(NC) Installed extended home file: $$base"; \
+				done; \
+			else \
+				echo "$(YELLOW)Warning: Extended home files source not found: $(HOME_FILES_EXTENDED_SRC)$(NC)" >&2; \
+			fi; \
+		fi; \
 		echo "$(GREEN)[cognitify]$(NC) Home files installed to $$HOME_DIR"; \
 	fi
 
@@ -311,6 +352,20 @@ install-skel: check-root ## Install dotfiles to /etc/skel for new users
 		install -m 644 "$$file" "$$dest"; \
 		echo "$(GREEN)[cognitify]$(NC) Installed $$base to $(SKEL_DEST)"; \
 	done
+	@if [ "$(EXTENDED_HOME_FILES)" = "yes" ]; then \
+		if [ -d "$(HOME_FILES_EXTENDED_SRC)" ]; then \
+			echo "$(GREEN)[cognitify]$(NC) Installing extended home files to /etc/skel..."; \
+			for file in "$(HOME_FILES_EXTENDED_SRC)"/*; do \
+				[ -f "$$file" ] || continue; \
+				base=".$$(basename "$$file")"; \
+				dest="$(SKEL_DEST)/$$base"; \
+				install -m 644 "$$file" "$$dest"; \
+				echo "$(GREEN)[cognitify]$(NC) Installed extended $$base to $(SKEL_DEST)"; \
+			done; \
+		else \
+			echo "$(YELLOW)Warning: Extended home files source not found: $(HOME_FILES_EXTENDED_SRC)$(NC)" >&2; \
+		fi; \
+	fi
 	@echo "$(GREEN)[cognitify]$(NC) Dotfiles installed to $(SKEL_DEST)"
 
 post-install: check-root ## Run post-installation script (package installation)

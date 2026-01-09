@@ -12,7 +12,7 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Colour
 
 # Available distributions
-DISTROS=("ubuntu" "debian" "fedora" "centos" "rocky" "opensuse")
+DISTROS=("ubuntu" "debian" "fedora" "centos" "rocky" "almalinux" "azurelinux" "opensuse")
 
 usage() {
     cat <<EOF

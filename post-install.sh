@@ -17,6 +17,7 @@ PKG_MANAGER_INSTALL="${2:-}"
 PKG_MANAGER_UPDATE="${3:-}"
 PACKAGES_DIR="${4:-src/packages}"
 INCLUDE_GUI="${5:-no}"
+DOCKER_MODE="${6:-no}"
 
 log() {
     printf "${GREEN}[cognitify]${NC} %s\n" "$*"
@@ -81,10 +82,15 @@ collect_packages() {
             ;;
     esac
     
-    # Read general packages
+    # Read general packages (use GENERAL DOCKER if in Docker mode)
+    local general_file="$PACKAGES_DIR/GENERAL"
+    if [[ "$DOCKER_MODE" = "yes" ]] && [[ -f "$PACKAGES_DIR/GENERAL DOCKER" ]]; then
+        general_file="$PACKAGES_DIR/GENERAL DOCKER"
+        log "Using Docker/container package list"
+    fi
     while IFS= read -r pkg; do
         [[ -n "$pkg" ]] && packages+=("$pkg")
-    done < <(read_packages "$PACKAGES_DIR/GENERAL")
+    done < <(read_packages "$general_file")
     
     # Read GUI packages if requested
     if [[ "$INCLUDE_GUI" = "yes" ]]; then
@@ -163,6 +169,7 @@ main() {
     log "Starting post-installation package installation"
     log "Package Manager: $PKG_MANAGER"
     log "Include GUI: $INCLUDE_GUI"
+    log "Docker Mode: $DOCKER_MODE"
     
     install_packages
     

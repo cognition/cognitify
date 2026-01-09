@@ -76,7 +76,7 @@ ddistro 3     # Returns: apt-get
 
 **Supported Distributions:**
 - Debian/Ubuntu/Mint → apt-get
-- RHEL/CentOS/Oracle/Fedora/Rocky/Amazon → yum/dnf
+- RHEL/CentOS/Oracle/Fedora/Rocky/AlmaLinux/Azure Linux/Amazon → yum/dnf
 - openSUSE/SLES → zypper
 
 ---

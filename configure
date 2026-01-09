@@ -11,9 +11,23 @@ HOME_DIR="${HOME_DIR:-$HOME}"
 INSTALL_USER="${INSTALL_USER:-${SUDO_USER:-${USER}}}"
 INCLUDE_GUI="${INCLUDE_GUI:-no}"
 SKIP_PACKAGES="${SKIP_PACKAGES:-no}"
+DOCKER_MODE="${DOCKER_MODE:-no}"
+EXTENDED_COMPLETIONS="${EXTENDED_COMPLETIONS:-no}"
 
 # Output file
 CONFIG_FILE="config.mk"
+
+# Detect if running in Docker/container environment
+detect_docker() {
+    # Check for common Docker/container indicators
+    if [[ -f /.dockerenv ]] || \
+       [[ -n "${container:-}" ]] || \
+       [[ -f /proc/1/cgroup ]] && grep -qa docker /proc/1/cgroup 2>/dev/null || \
+       [[ -f /proc/1/cgroup ]] && grep -qa kubepods /proc/1/cgroup 2>/dev/null; then
+        return 0
+    fi
+    return 1
+}
 
 # Detect distribution
 detect_distro() {
@@ -29,6 +43,11 @@ detect_distro() {
         DISTRO_ID="rhel"
     else
         DISTRO_ID="unknown"
+    fi
+    
+    # Auto-detect Docker mode if not explicitly set
+    if [[ "$DOCKER_MODE" = "no" ]] && detect_docker; then
+        DOCKER_MODE="yes"
     fi
 
     # Determine package manager
@@ -95,6 +114,14 @@ parse_args() {
                 SKIP_PACKAGES="yes"
                 shift
                 ;;
+            --docker)
+                DOCKER_MODE="yes"
+                shift
+                ;;
+            --extended-completions)
+                EXTENDED_COMPLETIONS="yes"
+                shift
+                ;;
             --distro-package=*)
                 DISTRO_PACKAGE="${1#*=}"
                 shift
@@ -114,6 +141,8 @@ Options:
   --root                 Install dotfiles for root user (equivalent to --user=root)
   --include-gui          Include GUI packages in installation
   --skip-packages        Skip package installation
+  --docker               Use Docker/container mode (uses pared down package list)
+  --extended-completions Install extended completions (kubectl, helm, terraform, etc.)
   --distro-package=DISTRO Create distribution-specific package (e.g., rocky, ubuntu)
   --help, -h             Show this help message
 
@@ -123,6 +152,8 @@ Environment variables:
   INSTALL_USER           User for dotfiles installation
   INCLUDE_GUI            Set to 'yes' to include GUI packages
   SKIP_PACKAGES          Set to 'yes' to skip package installation
+  DOCKER_MODE            Set to 'yes' to use Docker/container mode
+  EXTENDED_COMPLETIONS   Set to 'yes' to install extended completions
 
 Examples:
   $0 --prefix=/usr --include-gui
@@ -168,12 +199,15 @@ PKG_MANAGER_UPDATE = ${PKG_MANAGER_UPDATE}
 # Build options
 INCLUDE_GUI = ${INCLUDE_GUI}
 SKIP_PACKAGES = ${SKIP_PACKAGES}
+DOCKER_MODE = ${DOCKER_MODE}
+EXTENDED_COMPLETIONS = ${EXTENDED_COMPLETIONS}
 
 # Source directories
 SRC_DIR = src
 CONFIG_SRC = \$(SRC_DIR)/bash.bashrc.d
 HOME_FILES_SRC = \$(SRC_DIR)/home-files
 COMPLETIONS_SRC = \$(SRC_DIR)/completions
+COMPLETIONS_EXTENDED_SRC = \$(SRC_DIR)/completions-extended
 PACKAGES_DIR = \$(SRC_DIR)/packages
 BIN_SRC = \$(SRC_DIR)/usr/local/bin
 DISTRO_FILES_SRC = \$(SRC_DIR)/distro-files
@@ -192,6 +226,8 @@ EOF
     echo "  Install User: ${INSTALL_USER}"
     echo "  Include GUI: ${INCLUDE_GUI}"
     echo "  Skip Packages: ${SKIP_PACKAGES}"
+    echo "  Docker Mode: ${DOCKER_MODE}"
+    echo "  Extended Completions: ${EXTENDED_COMPLETIONS}"
     echo ""
     echo "Next steps:"
     echo "  make          - Build the project"

@@ -22,6 +22,8 @@ The following Dockerfiles are available:
 - **Dockerfile.fedora** - Fedora (latest)
 - **Dockerfile.centos** - CentOS (latest)
 - **Dockerfile.rocky** - Rocky Linux (latest)
+- **Dockerfile.almalinux** - AlmaLinux (latest)
+- **Dockerfile.azurelinux** - Azure Linux / CBL-Mariner (latest)
 - **Dockerfile.opensuse** - openSUSE Leap (latest)
 
 ## Manual Build and Test

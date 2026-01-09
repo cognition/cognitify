@@ -33,7 +33,7 @@ COPY . .
 
 # Ensure scripts are executable and configure
 RUN chmod +x configure post-install.sh && \
-    ./configure --user=${USERNAME} --skip-packages && \
+    ./configure --user=${USERNAME} --docker --skip-packages && \
     make && \
     sudo make install
 

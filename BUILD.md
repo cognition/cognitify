@@ -96,7 +96,7 @@ sudo make install
 
 The build system automatically detects:
 - **Debian/Ubuntu/Mint** → Uses `apt-get`
-- **RHEL/CentOS/Oracle Linux/Fedora/Rocky/Amazon Linux** → Uses `yum` or `dnf`
+- **RHEL/CentOS/Oracle Linux/Fedora/Rocky/AlmaLinux/Azure Linux/Amazon Linux** → Uses `yum` or `dnf`
 - **openSUSE/SLES** → Uses `zypper`
 
 ## Package Installation

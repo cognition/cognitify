@@ -18,6 +18,9 @@ declare -A DISTRO_PKG_MANAGER=(
     ["centos"]="yum"
     ["rocky"]="dnf"
     ["rhel"]="yum"
+    ["almalinux"]="dnf"
+    ["mariner"]="dnf"
+    ["azurelinux"]="dnf"
     ["opensuse"]="zypper"
     ["sles"]="zypper"
 )

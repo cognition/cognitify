@@ -21,12 +21,15 @@ SRC_DIR ?= src
 CONFIG_SRC ?= $(SRC_DIR)/bash.bashrc.d
 HOME_FILES_SRC ?= $(SRC_DIR)/home-files
 COMPLETIONS_SRC ?= $(SRC_DIR)/completions
+COMPLETIONS_EXTENDED_SRC ?= $(SRC_DIR)/completions-extended
 PACKAGES_DIR ?= $(SRC_DIR)/packages
 BIN_SRC ?= $(SRC_DIR)/usr/local/bin
 DISTRO_FILES_SRC ?= $(SRC_DIR)/distro-files
 PROFILE_D_SRC ?= $(SRC_DIR)/profile.d
 PROFILE_D_DEST ?= $(ETC_DIR)/profile.d
 SKEL_DEST ?= $(ETC_DIR)/skel
+DOCKER_MODE ?= no
+EXTENDED_COMPLETIONS ?= no
 # Allow ROOT=1 to override INSTALL_USER (even if set in config.mk)
 ifeq ($(ROOT),1)
 override INSTALL_USER := root
@@ -110,7 +113,7 @@ install-config: check-root ## Install bash configuration files
 	@chmod 644 "$(CONFIG_DEST)/.cognitify-version"
 	@echo "$(GREEN)[cognitify]$(NC) Configuration installed to $(CONFIG_DEST)"
 
-install-completions: check-root ## Install shell completions
+install-completions: check-root ## Install shell completions (standard and optionally extended)
 	@echo "$(GREEN)[cognitify]$(NC) Installing shell completions..."
 	@if [ ! -d "$(COMPLETIONS_SRC)" ]; then \
 		echo "$(YELLOW)Warning: Completions source not found: $(COMPLETIONS_SRC)$(NC)" >&2; \
@@ -120,7 +123,20 @@ install-completions: check-root ## Install shell completions
 	@for file in "$(COMPLETIONS_SRC)"/*; do \
 		[ -f "$$file" ] || continue; \
 		install -m 644 "$$file" "$(COMPLETIONS_DEST)/"; \
+		echo "$(GREEN)[cognitify]$(NC) Installed standard completion: $$(basename "$$file")"; \
 	done
+	@if [ "$(EXTENDED_COMPLETIONS)" = "yes" ]; then \
+		if [ -d "$(COMPLETIONS_EXTENDED_SRC)" ]; then \
+			echo "$(GREEN)[cognitify]$(NC) Installing extended completions..."; \
+			for file in "$(COMPLETIONS_EXTENDED_SRC)"/*; do \
+				[ -f "$$file" ] || continue; \
+				install -m 644 "$$file" "$(COMPLETIONS_DEST)/"; \
+				echo "$(GREEN)[cognitify]$(NC) Installed extended completion: $$(basename "$$file")"; \
+			done; \
+		else \
+			echo "$(YELLOW)Warning: Extended completions source not found: $(COMPLETIONS_EXTENDED_SRC)$(NC)" >&2; \
+		fi; \
+	fi
 	@echo "$(GREEN)[cognitify]$(NC) Completions installed to $(COMPLETIONS_DEST)"
 
 install-home: check-root ## Install user dotfiles
@@ -307,7 +323,7 @@ post-install: check-root ## Run post-installation script (package installation)
 		exit 0; \
 	fi
 	@echo "$(GREEN)[cognitify]$(NC) Running post-installation package script..."
-	@./post-install.sh "$(PKG_MANAGER)" "$(PKG_MANAGER_INSTALL)" "$(PKG_MANAGER_UPDATE)" "$(PACKAGES_DIR)" "$(INCLUDE_GUI)"
+	@./post-install.sh "$(PKG_MANAGER)" "$(PKG_MANAGER_INSTALL)" "$(PKG_MANAGER_UPDATE)" "$(PACKAGES_DIR)" "$(INCLUDE_GUI)" "$(DOCKER_MODE)"
 
 clean: ## Clean build artifacts
 	@echo "$(GREEN)[cognitify]$(NC) Cleaning..."

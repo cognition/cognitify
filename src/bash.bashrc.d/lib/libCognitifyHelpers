@@ -96,7 +96,7 @@ EOF
             distro_family="debian"
             package_manager="apt-get"
                 ;;
-        *rhel* | *centos* | *ol* | *oracle* | *fedora* | *rocky* | *amzn* )
+        *rhel* | *centos* | *ol* | *oracle* | *fedora* | *rocky* | *amzn* | *almalinux* | *mariner* )
             distro_family="fedora"
             package_manager="yum"
                 ;;

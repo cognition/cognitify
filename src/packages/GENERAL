@@ -1,5 +1,5 @@
 # General packages - common across all distributions
-# These packages have the same name across Debian/Ubuntu, RHEL/CentOS/Fedora/Rocky, and openSUSE/SLES
+# These packages have the same name across Debian/Ubuntu, RHEL/CentOS/Fedora/Rocky/AlmaLinux/Azure Linux, and openSUSE/SLES
 # (c) 2025 Ramon Brooker <rbrooker@aeo3.io>
 
 bash-completion

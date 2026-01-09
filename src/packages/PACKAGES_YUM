@@ -1,4 +1,4 @@
-# RHEL/CentOS/Fedora/Rocky specific packages
+# RHEL/CentOS/Fedora/Rocky/AlmaLinux/Azure Linux specific packages
 # Package names that differ from other distributions or are specific to yum/dnf
 # (c) 2025 Ramon Brooker <rbrooker@aeo3.io>
 

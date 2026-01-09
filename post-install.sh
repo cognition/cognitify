@@ -20,7 +20,7 @@ INCLUDE_GUI="${5:-no}"
 DOCKER_MODE="${6:-no}"
 
 log() {
-    printf "${GREEN}[cognitify]${NC} %s\n" "$*"
+    printf "${GREEN}[cognitify]${NC} %s\n" "$*" >&2
 }
 
 error() {

@@ -1,6 +1,6 @@
 # Cognitify
 
-Cognitify is a set of Linux shell customisations packaged for easy reuse across systems. It ships with shared `/etc/bash.bashrc.d` fragments, user-level dotfiles, completions for common CLI tools, and curated package lists for popular distributions.
+Cognitify is a set of Linux shell customisations packaged for easy reuse across systems. It ships with shared `/etc/bash.bashrc.d` fragments, isolated prompt configuration files, user-level dotfiles, completions for common CLI tools, and curated package lists for yum/dnf-based distributions.
 
 ## What's in the box
 
@@ -26,7 +26,7 @@ Flags:
 
 What the installer does:
 
-1. Detects a supported package manager (apt, yum, dnf, or zypper) and installs packages defined in `src/packages/GENERAL`, the distro-specific manifest, and optional GUI packages.
+1. Detects a supported package manager (apt, yum, dnf, or zypper) and installs packages defined in `src/packages/GENERAL`, the distro-specific manifest, and optional GUI packages. Fully supports RHEL (Red Hat Enterprise Linux).
 2. Creates (or reuses) the `cognitify` group, adds the target user to it, and installs `/etc/bash.bashrc.d` fragments with `root:cognitify` ownership.
 3. Copies completions into `/etc/bash_completion.d`.
 4. Copies dotfiles into the target user's home directory, backing up any existing files to `.orig` once.

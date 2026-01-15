@@ -72,17 +72,19 @@ sudo make install
 
 **What gets installed:**
 - Bash configuration files → `/etc/bash.bashrc.d/`
+- Prompt configuration files → `/etc/prompts/`
 - Shell completions → `/etc/bash_completion.d/`
 - User dotfiles → `~/.bashrc`, `~/.vimrc`, etc.
 - User binaries → `/usr/local/bin/` (or `$PREFIX/bin`)
 - Distro-specific files → As appropriate for your distribution
-- Required packages → Via your package manager (apt-get/yum/dnf/zypper)
+- Required packages → Via your package manager (yum/dnf)
 
 ## Make Targets
 
 - `make` or `make all` - Build/validate the project
 - `make install` - Install all components
 - `make install-config` - Install only configuration files
+- `make install-prompts` - Install only prompt configuration files
 - `make install-completions` - Install only shell completions
 - `make install-home` - Install only user dotfiles
 - `make install-bin` - Install only user binaries
@@ -95,9 +97,12 @@ sudo make install
 ## Distribution Detection
 
 The build system automatically detects:
-- **Debian/Ubuntu/Mint** → Uses `apt-get`
-- **RHEL/CentOS/Oracle Linux/Fedora/Rocky/AlmaLinux/Azure Linux/Amazon Linux** → Uses `yum` or `dnf`
-- **openSUSE/SLES** → Uses `zypper`
+- **RHEL (Red Hat Enterprise Linux)** → Uses `dnf` (or `yum` on older versions)
+- **CentOS/Oracle Linux/Fedora/Rocky/AlmaLinux/Azure Linux/Amazon Linux** → Uses `yum` or `dnf`
+
+**Note:** This pared-down version supports only yum/dnf-based distributions. Support for apt-get and zypper has been removed.
+
+RHEL is fully supported and will be automatically detected whether the system reports `ID="rhel"` or `ID="redhat"` in `/etc/os-release`.
 
 ## Package Installation
 
@@ -120,6 +125,7 @@ sudo make uninstall
 
 This will:
 - Remove configuration files from `/etc/bash.bashrc.d/`
+- Remove prompt configuration files from `/etc/prompts/`
 - Remove completions
 - Remove user dotfiles (but restore `.orig` backups if they exist)
 - Keep package installations (they are not removed)
@@ -166,7 +172,9 @@ sudo make post-install
 
 ## Version Information
 
-The version is read from the `version` file. After installation, the version is stored in `/etc/bash.bashrc.d/.cognitify-version`.
+The version is read from the `version` file. After installation, the version is stored in:
+- `/etc/bash.bashrc.d/.cognitify-version`
+- `/etc/prompts/.cognitify-version`
 
 ## Support
 

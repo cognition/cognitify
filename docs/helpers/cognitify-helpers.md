@@ -60,24 +60,27 @@ ddistro [index]
 
 **Parameters:**
 - `index` (optional) - Which detail to return:
-  - `0` - Distribution ID (e.g., "ubuntu", "fedora")
-  - `1` - Version ID (e.g., "22.04", "38")
-  - `2` - Distribution family (e.g., "debian", "fedora", "suse")
-  - `3` - Package manager (default, e.g., "apt-get", "yum", "zypper")
+  - `0` - Distribution ID (e.g., "fedora", "rocky", "centos")
+  - `1` - Version ID (e.g., "38", "9", "8")
+  - `2` - Distribution family (e.g., "fedora", "rhel")
+  - `3` - Package manager (default, e.g., "yum", "dnf")
+
+**Note:** While `ddistro` can detect various distributions, this pared-down version only supports package installation on yum/dnf-based systems. The function may return other package managers (like "apt-get" or "zypper") when detecting distributions, but those are not supported for package installation.
 
 **Examples:**
 ```bash
-ddistro        # Returns: apt-get
-ddistro 0     # Returns: ubuntu
-ddistro 1     # Returns: 22.04
-ddistro 2     # Returns: debian
-ddistro 3     # Returns: apt-get
+ddistro        # Returns: dnf (or yum on older systems)
+ddistro 0     # Returns: fedora (or rocky, centos, etc.)
+ddistro 1     # Returns: 38 (version number)
+ddistro 2     # Returns: fedora (distribution family)
+ddistro 3     # Returns: dnf (package manager)
 ```
 
 **Supported Distributions:**
-- Debian/Ubuntu/Mint → apt-get
-- RHEL/CentOS/Oracle/Fedora/Rocky/AlmaLinux/Azure Linux/Amazon → yum/dnf
-- openSUSE/SLES → zypper
+- **RHEL (Red Hat Enterprise Linux)** → dnf (or yum on older versions)
+- CentOS/Oracle/Fedora/Rocky/AlmaLinux/Azure Linux/Amazon → yum/dnf
+
+**Note:** This pared-down version supports only yum/dnf-based distributions. RHEL is fully supported and will be detected whether the system reports `ID="rhel"` or `ID="redhat"` in `/etc/os-release`. The `ddistro` function may detect other distributions, but package installation is limited to yum/dnf.
 
 ---
 

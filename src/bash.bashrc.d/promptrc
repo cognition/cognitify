@@ -4,8 +4,18 @@
 
 # Source environment variables and color definitions
 source /etc/environment
+# Always default to not WSL (can be overridden by /etc/environment if needed)
 IS_WSL=${IS_WSL:-FALSE}
-source ${BASE_PATH}/lib/cognitifyColours
+# Ensure IS_WSL is explicitly set to FALSE if not already set or empty
+if [[ -z "${IS_WSL}" ]] || [[ "${IS_WSL}" != "TRUE" ]]; then
+    IS_WSL="FALSE"
+fi
+PROMPTS_BASE_PATH="/etc/prompts"
+if [[ -f "${PROMPTS_BASE_PATH}/lib/cognitifyColours" ]]; then
+    source "${PROMPTS_BASE_PATH}/lib/cognitifyColours"
+elif [[ -f "${BASE_PATH}/lib/cognitifyColours" ]]; then
+    source "${BASE_PATH}/lib/cognitifyColours"
+fi
 
 # If user-specific override file exists, source it to apply user preferences
 [[ -f "${HOME}/.over-ride" ]] && source "${HOME}/.over-ride"

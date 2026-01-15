@@ -90,9 +90,15 @@ EOF
 
     local distro_family # Declare variables for distro family and package manager
     local package_manager
+    # Normalize RHEL ID variants
+    local normalized_id="${ID}"
+    if [[ "${ID}" == "redhat" ]]; then
+        normalized_id="rhel"
+    fi
+    
     # Determine the family and package manager based on distro ID
     # Use command -v to detect actual package manager availability (more accurate than hardcoding)
-    case "${ID}" in 
+    case "${normalized_id}" in 
         *debian* | *ubuntu* | *mint* )
             distro_family="debian"
             # Check for actual package manager availability
@@ -102,13 +108,22 @@ EOF
                 package_manager="unknown"
             fi
                 ;;
-        *rhel* | *centos* | *ol* | *oracle* | *fedora* | *rocky* | *amzn* | *almalinux* | *mariner* )
-            distro_family="fedora"
+        *rhel* | *centos* | *ol* | *oracle* | *rocky* | *amzn* | *almalinux* | *mariner* )
+            distro_family="rhel"
             # Prefer dnf if available, fallback to yum
             if command -v dnf >/dev/null 2>&1; then
                 package_manager="dnf"
             elif command -v yum >/dev/null 2>&1; then
                 package_manager="yum"
+            else
+                package_manager="unknown"
+            fi
+                ;;
+        *fedora* )
+            distro_family="fedora"
+            # Check for actual package manager availability
+            if command -v dnf >/dev/null 2>&1; then
+                package_manager="dnf"
             else
                 package_manager="unknown"
             fi
@@ -129,7 +144,12 @@ EOF
     esac
 
     # Array to hold various distro details
-    declare -a distro_details=("${ID}" "${VERSION_ID}" "${distro_family}" "${package_manager}")
+    # Normalize ID for output if it was redhat
+    local output_id="${ID}"
+    if [[ "${ID}" == "redhat" ]]; then
+        output_id="rhel"
+    fi
+    declare -a distro_details=("${output_id}" "${VERSION_ID}" "${distro_family}" "${package_manager}")
     echo "${distro_details[${index}]}" # Output the requested detail
 }
 

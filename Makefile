@@ -141,8 +141,17 @@ install-prompts: check-root ## Install prompt configuration files
 		install -m 644 "$$file" "$(PROMPTS_DEST)/"; \
 		chown root:"$(GROUP_NAME)" "$(PROMPTS_DEST)/$$(basename "$$file")"; \
 	done
-	@if [ -n "$(HOSTNAME_COLOUR)" ]; then \
-		echo "$(GREEN)[cognitify]$(NC) Creating prompt configuration with hostname colour: $(HOSTNAME_COLOUR)"; \
+	@if [ -n "$(HOSTNAME_COLOUR)" ] || [ -n "$(USERNAME_COLOUR)" ] || [ -n "$(PWD_COLOUR)" ]; then \
+		echo "$(GREEN)[cognitify]$(NC) Creating prompt configuration with colour settings..."; \
+		if [ -n "$(HOSTNAME_COLOUR)" ]; then \
+			echo "  Hostname: $(HOSTNAME_COLOUR)"; \
+		fi; \
+		if [ -n "$(USERNAME_COLOUR)" ]; then \
+			echo "  Username: $(USERNAME_COLOUR)"; \
+		fi; \
+		if [ -n "$(PWD_COLOUR)" ]; then \
+			echo "  PWD: $(PWD_COLOUR)"; \
+		fi; \
 		echo "# Cognitify prompt configuration" > "$(PROMPTS_DEST)/config"; \
 		echo "# Generated during installation" >> "$(PROMPTS_DEST)/config"; \
 		echo "# (c) 2026 Ramon Brooker <rbrooker@aeo3.io>" >> "$(PROMPTS_DEST)/config"; \
@@ -152,8 +161,16 @@ install-prompts: check-root ## Install prompt configuration files
 		echo "    source \"$(PROMPTS_DEST)/lib/cognitifyColours\"" >> "$(PROMPTS_DEST)/config"; \
 		echo "fi" >> "$(PROMPTS_DEST)/config"; \
 		echo "" >> "$(PROMPTS_DEST)/config"; \
-		echo "# Set default hostname colour" >> "$(PROMPTS_DEST)/config"; \
-		echo "export OVERRIDE_HOSTNAME_COLOUR=\$${$(HOSTNAME_COLOUR)}" >> "$(PROMPTS_DEST)/config"; \
+		echo "# Set default colour overrides" >> "$(PROMPTS_DEST)/config"; \
+		if [ -n "$(HOSTNAME_COLOUR)" ]; then \
+			echo "export OVERRIDE_HOSTNAME_COLOUR=\$${$(HOSTNAME_COLOUR)}" >> "$(PROMPTS_DEST)/config"; \
+		fi; \
+		if [ -n "$(USERNAME_COLOUR)" ]; then \
+			echo "export OVERRIDE_USERNAME_COLOUR=\$${$(USERNAME_COLOUR)}" >> "$(PROMPTS_DEST)/config"; \
+		fi; \
+		if [ -n "$(PWD_COLOUR)" ]; then \
+			echo "export OVERRIDE_PWD_COLOUR=\$${$(PWD_COLOUR)}" >> "$(PROMPTS_DEST)/config"; \
+		fi; \
 		chown root:"$(GROUP_NAME)" "$(PROMPTS_DEST)/config"; \
 		chmod 644 "$(PROMPTS_DEST)/config"; \
 	fi

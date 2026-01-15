@@ -263,10 +263,14 @@ EOF
 
 # Parse colour-combos file and randomly select a combination
 select_random_colour_profile() {
-    local colour_file="colour-combos"
-    
-    if [[ ! -f "$colour_file" ]]; then
-        echo "Warning: colour-combos file not found, cannot select random profile" >&2
+    # Try both .md and non-.md versions for backward compatibility
+    local colour_file=""
+    if [[ -f "colour-combos.md" ]]; then
+        colour_file="colour-combos.md"
+    elif [[ -f "colour-combos" ]]; then
+        colour_file="colour-combos"
+    else
+        echo "Warning: colour-combos file not found (checked colour-combos.md and colour-combos), cannot select random profile" >&2
         return 1
     fi
     
@@ -295,7 +299,7 @@ select_random_colour_profile() {
     ' "$colour_file")
     
     if [[ -z "$combinations" ]]; then
-        echo "Warning: No valid colour combinations found in colour-combos file" >&2
+        echo "Warning: No valid colour combinations found in $colour_file" >&2
         return 1
     fi
     

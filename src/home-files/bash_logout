@@ -8,6 +8,6 @@ if [ "$SHLVL" = 1 ]; then
     [ -x /usr/bin/clear_console ] && /usr/bin/clear_console -q
 fi
 
-echo "logged out at $(date) by $(whoami)" >> "${HOME}/.bash_logout.log" | tee -a "/var/log/bash_logout.log"
+echo "logged out at $(date) by $(whoami)" >> "${HOME}/.bash_logout.log" 2>&1
 
 exit 0

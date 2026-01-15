@@ -1,4 +1,4 @@
-## (c) 2025
+## (c) 2026
 ## Ramon Brooker <rbrooker@aeo3.io>
 ## Cognitify system-wide profile configuration
 

@@ -1,6 +1,6 @@
 #!/bin/bash 
 
-## (C) 2023
+## (C) 2026
 ## Ramon Brooker <rbrooker@aeo3.io>
 
 # Variables for Cognitify and Computed Variables

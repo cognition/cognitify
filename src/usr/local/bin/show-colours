@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Display Cognitify colour names in their actual colours
-# (c) 2025 Ramon Brooker <rbrooker@aeo3.io>
+# (c) 2026 Ramon Brooker <rbrooker@aeo3.io>
 
 # Source the colour definitions if available
 COLOUR_FILE=""

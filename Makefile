@@ -30,6 +30,7 @@ PROFILE_D_SRC ?= $(SRC_DIR)/profile.d
 PROFILE_D_DEST ?= $(ETC_DIR)/profile.d
 SKEL_DEST ?= $(ETC_DIR)/skel
 DOCKER_MODE ?= no
+HOSTNAME_COLOUR ?=
 EXTENDED_COMPLETIONS ?= no
 EXTENDED_HOME_FILES ?= no
 # Allow ROOT=1 to override INSTALL_USER (even if set in config.mk)
@@ -114,6 +115,49 @@ install-config: check-root ## Install bash configuration files
 	@echo "$(CONFIG_DEST)/.cognitify-version" | xargs -I {} sh -c 'echo "$(VERSION)" > {}'
 	@chmod 644 "$(CONFIG_DEST)/.cognitify-version"
 	@echo "$(GREEN)[cognitify]$(NC) Configuration installed to $(CONFIG_DEST)"
+
+install-prompts: check-root ## Install prompt configuration files
+	@echo "$(GREEN)[cognitify]$(NC) Installing prompt files..."
+	@if [ ! -d "$(PROMPTS_SRC)" ]; then \
+		echo "$(YELLOW)Warning: Prompts source not found: $(PROMPTS_SRC)$(NC)" >&2; \
+		exit 0; \
+	fi
+	@install -d -m 775 -o root -g "$(GROUP_NAME)" "$(PROMPTS_DEST)" || \
+		(if ! getent group "$(GROUP_NAME)" >/dev/null 2>&1; then \
+			echo "$(GREEN)[cognitify]$(NC) Creating group $(GROUP_NAME)..."; \
+			groupadd "$(GROUP_NAME)"; \
+		fi; \
+		install -d -m 775 -o root -g "$(GROUP_NAME)" "$(PROMPTS_DEST)")
+	@if [ -d "$(PROMPTS_SRC)/lib" ]; then \
+		install -d -m 775 -o root -g "$(GROUP_NAME)" "$(PROMPTS_DEST)/lib"; \
+		cp -R "$(PROMPTS_SRC)/lib/." "$(PROMPTS_DEST)/lib/"; \
+		chown -R root:"$(GROUP_NAME)" "$(PROMPTS_DEST)/lib"; \
+		chmod -R 775 "$(PROMPTS_DEST)/lib"; \
+	fi
+	@for file in "$(PROMPTS_SRC)"/*; do \
+		[ -f "$$file" ] || continue; \
+		install -m 644 "$$file" "$(PROMPTS_DEST)/"; \
+		chown root:"$(GROUP_NAME)" "$(PROMPTS_DEST)/$$(basename "$$file")"; \
+	done
+	@if [ -n "$(HOSTNAME_COLOUR)" ]; then \
+		echo "$(GREEN)[cognitify]$(NC) Creating prompt configuration with hostname colour: $(HOSTNAME_COLOUR)"; \
+		echo "# Cognitify prompt configuration" > "$(PROMPTS_DEST)/config"; \
+		echo "# Generated during installation" >> "$(PROMPTS_DEST)/config"; \
+		echo "# (c) 2026 Ramon Brooker <rbrooker@aeo3.io>" >> "$(PROMPTS_DEST)/config"; \
+		echo "" >> "$(PROMPTS_DEST)/config"; \
+		echo "# Source colour definitions first" >> "$(PROMPTS_DEST)/config"; \
+		echo "if [[ -f \"$(PROMPTS_DEST)/lib/cognitifyColours\" ]]; then" >> "$(PROMPTS_DEST)/config"; \
+		echo "    source \"$(PROMPTS_DEST)/lib/cognitifyColours\"" >> "$(PROMPTS_DEST)/config"; \
+		echo "fi" >> "$(PROMPTS_DEST)/config"; \
+		echo "" >> "$(PROMPTS_DEST)/config"; \
+		echo "# Set default hostname colour" >> "$(PROMPTS_DEST)/config"; \
+		echo "export OVERRIDE_HOSTNAME_COLOUR=\$${$(HOSTNAME_COLOUR)}" >> "$(PROMPTS_DEST)/config"; \
+		chown root:"$(GROUP_NAME)" "$(PROMPTS_DEST)/config"; \
+		chmod 644 "$(PROMPTS_DEST)/config"; \
+	fi
+	@echo "$(PROMPTS_DEST)/.cognitify-version" | xargs -I {} sh -c 'echo "$(VERSION)" > {}'
+	@chmod 644 "$(PROMPTS_DEST)/.cognitify-version"
+	@echo "$(GREEN)[cognitify]$(NC) Prompts installed to $(PROMPTS_DEST)"
 
 install-completions: check-root ## Install shell completions (standard and optionally extended)
 	@echo "$(GREEN)[cognitify]$(NC) Installing shell completions..."

@@ -14,6 +14,7 @@ SKIP_PACKAGES="${SKIP_PACKAGES:-no}"
 DOCKER_MODE="${DOCKER_MODE:-no}"
 EXTENDED_COMPLETIONS="${EXTENDED_COMPLETIONS:-no}"
 EXTENDED_HOME_FILES="${EXTENDED_HOME_FILES:-no}"
+HOSTNAME_COLOUR="${HOSTNAME_COLOUR:-}"
 
 # Output file
 CONFIG_FILE="config.mk"
@@ -164,6 +165,14 @@ parse_args() {
                 DISTRO_PACKAGE="$2"
                 shift 2
                 ;;
+            --hostname-colour=*)
+                HOSTNAME_COLOUR="${1#*=}"
+                shift
+                ;;
+            --hostname-colour)
+                HOSTNAME_COLOUR="$2"
+                shift 2
+                ;;
             --help|-h)
                 cat <<EOF
 Usage: $0 [OPTIONS]
@@ -178,6 +187,7 @@ Options:
   --docker               Use Docker/container mode (uses pared down package list)
   --extended-completions Install extended completions (kubectl, helm, terraform, etc.)
   --extended-home-files Install extended home files (terraformrc, shellcheckrc, etc.)
+  --hostname-colour=COLOUR Set default hostname colour (e.g., AZURE, BRIGHT_PINK, OLIVE)
   --distro-package=DISTRO Create distribution-specific package (e.g., rocky, ubuntu)
   --help, -h             Show this help message
 
@@ -190,10 +200,13 @@ Environment variables:
   DOCKER_MODE            Set to 'yes' to use Docker/container mode
   EXTENDED_COMPLETIONS   Set to 'yes' to install extended completions
   EXTENDED_HOME_FILES    Set to 'yes' to install extended home files
+  HOSTNAME_COLOUR        Set default hostname colour (e.g., AZURE, BRIGHT_PINK, OLIVE)
 
 Examples:
   $0 --prefix=/usr --include-gui
   $0 --user=john --skip-packages
+  $0 --hostname-colour=AZURE
+  $0 --hostname-colour=BRIGHT_PINK --skip-packages
 EOF
                 exit 0
                 ;;
@@ -238,6 +251,7 @@ SKIP_PACKAGES = ${SKIP_PACKAGES}
 DOCKER_MODE = ${DOCKER_MODE}
 EXTENDED_COMPLETIONS = ${EXTENDED_COMPLETIONS}
 EXTENDED_HOME_FILES = ${EXTENDED_HOME_FILES}
+HOSTNAME_COLOUR = ${HOSTNAME_COLOUR}
 
 # Source directories
 SRC_DIR = src
@@ -262,11 +276,14 @@ EOF
     echo "  Installation Prefix: ${PREFIX}"
     echo "  Configuration Directory: ${ETC_DIR}"
     echo "  Install User: ${INSTALL_USER}"
-    echo "  Include GUI: ${INCLUDE_GUI}"
-    echo "  Skip Packages: ${SKIP_PACKAGES}"
-    echo "  Docker Mode: ${DOCKER_MODE}"
-    echo "  Extended Completions: ${EXTENDED_COMPLETIONS}"
-    echo "  Extended Home Files: ${EXTENDED_HOME_FILES}"
+  echo "  Include GUI: ${INCLUDE_GUI}"
+  echo "  Skip Packages: ${SKIP_PACKAGES}"
+  echo "  Docker Mode: ${DOCKER_MODE}"
+  echo "  Extended Completions: ${EXTENDED_COMPLETIONS}"
+  echo "  Extended Home Files: ${EXTENDED_HOME_FILES}"
+  if [[ -n "${HOSTNAME_COLOUR}" ]]; then
+      echo "  Hostname Colour: ${HOSTNAME_COLOUR}"
+  fi
     echo ""
     echo "Next steps:"
     echo "  make          - Build the project"

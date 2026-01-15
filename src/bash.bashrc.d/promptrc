@@ -17,6 +17,11 @@ elif [[ -f "${BASE_PATH}/lib/cognitifyColours" ]]; then
     source "${BASE_PATH}/lib/cognitifyColours"
 fi
 
+# Source prompt configuration file if it exists (contains system-wide defaults)
+if [[ -f "${PROMPTS_BASE_PATH}/config" ]]; then
+    source "${PROMPTS_BASE_PATH}/config"
+fi
+
 # If user-specific override file exists, source it to apply user preferences
 [[ -f "${HOME}/.over-ride" ]] && source "${HOME}/.over-ride"
 

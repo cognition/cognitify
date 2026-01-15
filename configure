@@ -12,6 +12,9 @@ INSTALL_USER="${INSTALL_USER:-${SUDO_USER:-${USER}}}"
 SKIP_PACKAGES="${SKIP_PACKAGES:-no}"
 DOCKER_MODE="${DOCKER_MODE:-no}"
 HOSTNAME_COLOUR="${HOSTNAME_COLOUR:-}"
+USERNAME_COLOUR="${USERNAME_COLOUR:-}"
+PWD_COLOUR="${PWD_COLOUR:-}"
+COLOUR_PROFILE="${COLOUR_PROFILE:-}"
 
 # Output file
 CONFIG_FILE="config.mk"
@@ -143,6 +146,14 @@ parse_args() {
                 HOSTNAME_COLOUR="$2"
                 shift 2
                 ;;
+            --colour-profile=*)
+                COLOUR_PROFILE="${1#*=}"
+                shift
+                ;;
+            --colour-profile)
+                COLOUR_PROFILE="$2"
+                shift 2
+                ;;
             --help|-h)
                 cat <<EOF
 Usage: $0 [OPTIONS]
@@ -155,6 +166,7 @@ Options:
   --skip-packages        Skip package installation
   --docker               Use Docker/container mode (uses pared down package list)
   --hostname-colour=COLOUR Set default hostname colour (e.g., AZURE, BRIGHT_PINK, OLIVE)
+  --colour-profile=PROFILE Set colour profile (use 'random' to randomly select from colour-combos)
   --distro-package=DISTRO Create distribution-specific package (e.g., rocky, ubuntu)
   --help, -h             Show this help message
 
@@ -165,12 +177,15 @@ Environment variables:
   SKIP_PACKAGES          Set to 'yes' to skip package installation
   DOCKER_MODE            Set to 'yes' to use Docker/container mode
   HOSTNAME_COLOUR        Set default hostname colour (e.g., AZURE, BRIGHT_PINK, OLIVE)
+  COLOUR_PROFILE         Set colour profile (use 'random' to randomly select from colour-combos)
 
 Examples:
   $0 --prefix=/usr
   $0 --user=john --skip-packages
   $0 --hostname-colour=AZURE
   $0 --hostname-colour=BRIGHT_PINK --skip-packages
+  $0 --colour-profile=random
+  $0 --colour-profile=random --skip-packages
 EOF
                 exit 0
                 ;;
@@ -183,9 +198,85 @@ EOF
     done
 }
 
+# Parse colour-combos file and randomly select a combination
+select_random_colour_profile() {
+    local colour_file="colour-combos"
+    
+    if [[ ! -f "$colour_file" ]]; then
+        echo "Warning: colour-combos file not found, cannot select random profile" >&2
+        return 1
+    fi
+    
+    # Extract valid colour combination lines (skip markdown syntax, comments, empty lines)
+    local combinations
+    combinations=$(awk '
+        NF && \
+        $1 !~ /^#/ && \
+        $1 !~ /^```/ && \
+        $1 !~ /^\*\*/ && \
+        $1 !~ /^\(c\)/ && \
+        $1 !~ /^Copy/ && \
+        $1 !~ /^Or/ && \
+        $1 !~ /^The/ && \
+        $1 !~ /^export/ && \
+        $1 !~ /^Available/ && \
+        $1 !~ /^Format:/ && \
+        $1 !~ /^-/ && \
+        $1 !~ /^##/ {
+            # Check if line has exactly 3 fields (hostname, username, pwd colours)
+            # and fields look like colour names (all caps, may contain underscores)
+            if (NF == 3 && $1 ~ /^[A-Z_]+$/ && $2 ~ /^[A-Z_]+$/ && $3 ~ /^[A-Z_]+$/) {
+                print $1 " " $2 " " $3
+            }
+        }
+    ' "$colour_file")
+    
+    if [[ -z "$combinations" ]]; then
+        echo "Warning: No valid colour combinations found in colour-combos file" >&2
+        return 1
+    fi
+    
+    # Count combinations and select a random one
+    local count
+    count=$(echo "$combinations" | wc -l)
+    
+    # Generate random number between 1 and count
+    local random_line
+    if command -v shuf >/dev/null 2>&1; then
+        random_line=$(echo "$combinations" | shuf -n 1)
+    elif command -v gshuf >/dev/null 2>&1; then
+        random_line=$(echo "$combinations" | gshuf -n 1)
+    else
+        # Fallback: use $RANDOM if available, otherwise use a simple hash
+        local line_num
+        if [[ -n "${RANDOM:-}" ]]; then
+            line_num=$((RANDOM % count + 1))
+        else
+            # Use a simple hash based on current time
+            line_num=$(( $(date +%s) % count + 1 ))
+        fi
+        random_line=$(echo "$combinations" | sed -n "${line_num}p")
+    fi
+    
+    # Extract the three colours
+    HOSTNAME_COLOUR=$(echo "$random_line" | awk '{print $1}')
+    USERNAME_COLOUR=$(echo "$random_line" | awk '{print $2}')
+    PWD_COLOUR=$(echo "$random_line" | awk '{print $3}')
+    
+    echo "Selected random colour profile:"
+    echo "  Hostname: ${HOSTNAME_COLOUR}"
+    echo "  Username: ${USERNAME_COLOUR}"
+    echo "  PWD: ${PWD_COLOUR}"
+}
+
 # Generate config.mk
 generate_config() {
     detect_distro
+    
+    # Handle colour profile selection
+    if [[ "$COLOUR_PROFILE" == "random" ]]; then
+        select_random_colour_profile
+    fi
     
     cat > "$CONFIG_FILE" <<EOF
 # Cognitify build configuration
@@ -213,6 +304,8 @@ PKG_MANAGER_UPDATE = ${PKG_MANAGER_UPDATE}
 SKIP_PACKAGES = ${SKIP_PACKAGES}
 DOCKER_MODE = ${DOCKER_MODE}
 HOSTNAME_COLOUR = ${HOSTNAME_COLOUR}
+USERNAME_COLOUR = ${USERNAME_COLOUR}
+PWD_COLOUR = ${PWD_COLOUR}
 
 # Source directories
 SRC_DIR = src
@@ -239,6 +332,12 @@ EOF
     echo "  Docker Mode: ${DOCKER_MODE}"
     if [[ -n "${HOSTNAME_COLOUR}" ]]; then
         echo "  Hostname Colour: ${HOSTNAME_COLOUR}"
+    fi
+    if [[ -n "${USERNAME_COLOUR}" ]]; then
+        echo "  Username Colour: ${USERNAME_COLOUR}"
+    fi
+    if [[ -n "${PWD_COLOUR}" ]]; then
+        echo "  PWD Colour: ${PWD_COLOUR}"
     fi
     echo ""
     echo "Next steps:"

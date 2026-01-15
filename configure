@@ -146,6 +146,22 @@ parse_args() {
                 HOSTNAME_COLOUR="$2"
                 shift 2
                 ;;
+            --username-colour=*)
+                USERNAME_COLOUR="${1#*=}"
+                shift
+                ;;
+            --username-colour)
+                USERNAME_COLOUR="$2"
+                shift 2
+                ;;
+            --pwd-colour=*)
+                PWD_COLOUR="${1#*=}"
+                shift
+                ;;
+            --pwd-colour)
+                PWD_COLOUR="$2"
+                shift 2
+                ;;
             --colour-profile=*)
                 COLOUR_PROFILE="${1#*=}"
                 shift
@@ -166,7 +182,10 @@ Options:
   --skip-packages        Skip package installation
   --docker               Use Docker/container mode (uses pared down package list)
   --hostname-colour=COLOUR Set default hostname colour (e.g., AZURE, BRIGHT_PINK, OLIVE)
+  --username-colour=COLOUR Set default username colour (e.g., LIME, GRAY, AZURE)
+  --pwd-colour=COLOUR      Set default PWD colour (e.g., AZURE, LT_BLUE, BRIGHT_PINK)
   --colour-profile=PROFILE Set colour profile (use 'random' to randomly select from colour-combos)
+                          When 'random' is used, sets hostname, username, and PWD colours
   --distro-package=DISTRO Create distribution-specific package (e.g., rocky, ubuntu)
   --help, -h             Show this help message
 
@@ -177,13 +196,17 @@ Environment variables:
   SKIP_PACKAGES          Set to 'yes' to skip package installation
   DOCKER_MODE            Set to 'yes' to use Docker/container mode
   HOSTNAME_COLOUR        Set default hostname colour (e.g., AZURE, BRIGHT_PINK, OLIVE)
+  USERNAME_COLOUR        Set default username colour (e.g., LIME, GRAY, AZURE)
+  PWD_COLOUR             Set default PWD colour (e.g., AZURE, LT_BLUE, BRIGHT_PINK)
   COLOUR_PROFILE         Set colour profile (use 'random' to randomly select from colour-combos)
+                         When 'random' is used, automatically sets HOSTNAME_COLOUR, USERNAME_COLOUR, and PWD_COLOUR
 
 Examples:
   $0 --prefix=/usr
   $0 --user=john --skip-packages
   $0 --hostname-colour=AZURE
   $0 --hostname-colour=BRIGHT_PINK --skip-packages
+  $0 --hostname-colour=AZURE --username-colour=LIME --pwd-colour=AZURE
   $0 --colour-profile=random
   $0 --colour-profile=random --skip-packages
 EOF
@@ -200,10 +223,14 @@ EOF
 
 # Parse colour-combos file and randomly select a combination
 select_random_colour_profile() {
-    local colour_file="colour-combos"
-    
-    if [[ ! -f "$colour_file" ]]; then
-        echo "Warning: colour-combos file not found, cannot select random profile" >&2
+    # Try both .md and non-.md versions for backward compatibility
+    local colour_file=""
+    if [[ -f "colour-combos.md" ]]; then
+        colour_file="colour-combos.md"
+    elif [[ -f "colour-combos" ]]; then
+        colour_file="colour-combos"
+    else
+        echo "Warning: colour-combos file not found (checked colour-combos.md and colour-combos), cannot select random profile" >&2
         return 1
     fi
     
@@ -232,7 +259,7 @@ select_random_colour_profile() {
     ' "$colour_file")
     
     if [[ -z "$combinations" ]]; then
-        echo "Warning: No valid colour combinations found in colour-combos file" >&2
+        echo "Warning: No valid colour combinations found in $colour_file" >&2
         return 1
     fi
     

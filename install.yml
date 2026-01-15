@@ -10,9 +10,13 @@
 #
 # Variables:
 #   install_user: User to install dotfiles for (default: ansible_user)
+#   install_all_users: Install for all users (default: false)
 #   skip_packages: Skip package installation (default: false)
 #   docker_mode: Use Docker/container mode (default: false)
 #   hostname_colour: Set default hostname colour (optional)
+#   username_colour: Set default username colour (optional)
+#   pwd_colour: Set default PWD colour (optional)
+#   colour_profile: Set colour profile - use 'random' to randomly select from colour-combos.md
 
 - name: Install Cognitify
   hosts: all
@@ -20,9 +24,13 @@
   vars:
     cognitify_version: "{{ lookup('file', 'version') | default('0.0.1', true) | trim }}"
     install_user: "{{ ansible_user | default('root') }}"
+    install_all_users: false
     skip_packages: false
     docker_mode: false
     hostname_colour: ""
+    username_colour: ""
+    pwd_colour: ""
+    colour_profile: ""
     group_name: "cognitify"
     config_dest: "/etc/bash.bashrc.d"
     prompts_dest: "/etc/prompts"
@@ -111,27 +119,77 @@
         name: "{{ group_name }}"
         state: present
 
+    - name: Select random colour profile
+      shell: |
+        COLOUR_FILE=""
+        if [[ -f "{{ playbook_dir }}/colour-combos.md" ]]; then
+          COLOUR_FILE="{{ playbook_dir }}/colour-combos.md"
+        elif [[ -f "{{ playbook_dir }}/colour-combos" ]]; then
+          COLOUR_FILE="{{ playbook_dir }}/colour-combos"
+        fi
+        
+        if [[ -n "$COLOUR_FILE" ]]; then
+          awk 'NF && $1 !~ /^#/ && $1 !~ /^```/ && $1 !~ /^\*\*/ && $1 !~ /^\(c\)/ && $1 !~ /^Copy/ && $1 !~ /^Or/ && $1 !~ /^The/ && $1 !~ /^export/ && $1 !~ /^Available/ && $1 !~ /^Format:/ && $1 !~ /^-/ && $1 !~ /^##/ { if (NF == 3 && $1 ~ /^[A-Z_]+$/ && $2 ~ /^[A-Z_]+$/ && $3 ~ /^[A-Z_]+$/) { print $1 " " $2 " " $3 } }' "$COLOUR_FILE" | shuf -n 1
+        fi
+      register: random_colour_output
+      changed_when: false
+      when: colour_profile == "random"
+
+    - name: Set random colour variables
+      set_fact:
+        hostname_colour: "{{ random_colour_output.stdout.split(' ')[0] }}"
+        username_colour: "{{ random_colour_output.stdout.split(' ')[1] }}"
+        pwd_colour: "{{ random_colour_output.stdout.split(' ')[2] }}"
+      when:
+        - colour_profile == "random"
+        - random_colour_output.stdout is defined
+        - random_colour_output.stdout | length > 0
+
     - name: Get user home directory
       shell: getent passwd "{{ install_user }}" | cut -d: -f6
       register: user_home_output
       changed_when: false
       failed_when: false
+      when: not install_all_users | bool
 
     - name: Set user home directory fact
       set_fact:
         user_home: "{{ user_home_output.stdout }}"
-      when: user_home_output.stdout | length > 0
+      when:
+        - not install_all_users | bool
+        - user_home_output.stdout | length > 0
 
     - name: Ensure user exists
       fail:
         msg: "User {{ install_user }} does not exist"
-      when: user_home is not defined or user_home == ""
+      when:
+        - not install_all_users | bool
+        - user_home is not defined or user_home == ""
 
     - name: Add user to cognitify group
       user:
         name: "{{ install_user }}"
         groups: "{{ group_name }}"
         append: yes
+      when: not install_all_users | bool
+
+    - name: Get all users for installation
+      getent:
+        database: passwd
+      register: all_users
+      when: install_all_users | bool
+
+    - name: Add all users to cognitify group
+      user:
+        name: "{{ item.key }}"
+        groups: "{{ group_name }}"
+        append: yes
+      loop: "{{ all_users.ansible_facts.getent_passwd | dict2items }}"
+      when:
+        - install_all_users | bool
+        - item.value[1] | int >= 1000 or item.key == "root"
+        - item.value[5] != "/usr/sbin/nologin" and item.value[5] != "/sbin/nologin" and item.value[5] != "/bin/false"
+      ignore_errors: yes
 
     - name: Create configuration directory
       file:
@@ -235,7 +293,7 @@
         - prompts_lib_stat.stat.exists
         - prompt_lib_files.files | length > 0
 
-    - name: Create prompt configuration with hostname colour
+    - name: Create prompt configuration with colour settings
       copy:
         content: |
           # Cognitify prompt configuration
@@ -247,14 +305,22 @@
               source "{{ prompts_dest }}/lib/cognitifyColours"
           fi
 
-          # Set default hostname colour
+          # Set default colour overrides
+          {% if hostname_colour | length > 0 %}
           export OVERRIDE_HOSTNAME_COLOUR=${ {{ hostname_colour }} }
+          {% endif %}
+          {% if username_colour | length > 0 %}
+          export OVERRIDE_USERNAME_COLOUR=${ {{ username_colour }} }
+          {% endif %}
+          {% if pwd_colour | length > 0 %}
+          export OVERRIDE_PWD_COLOUR=${ {{ pwd_colour }} }
+          {% endif %}
         dest: "{{ prompts_dest }}/config"
         owner: root
         group: "{{ group_name }}"
         mode: '0644'
       when:
-        - hostname_colour | length > 0
+        - (hostname_colour | length > 0) or (username_colour | length > 0) or (pwd_colour | length > 0)
         - prompts_src_stat.stat.exists
 
     - name: Create version file in prompts directory
@@ -328,6 +394,78 @@
         mode: preserve
       loop: "{{ home_files.files | default([]) }}"
       when:
+        - home_files_src_stat.stat.exists
+        - home_files.files | length > 0
+        - not install_all_users | bool
+
+    - name: Update .over-ride file with colour settings
+      blockinfile:
+        path: "{{ user_home }}/.over-ride"
+        marker: "# {mark} ANSIBLE MANAGED BLOCK - Cognitify Colour Settings"
+        block: |
+          {% if hostname_colour | length > 0 %}
+          export OVERRIDE_HOSTNAME_COLOUR=${ {{ hostname_colour }} }
+          {% endif %}
+          {% if username_colour | length > 0 %}
+          export OVERRIDE_USERNAME_COLOUR=${ {{ username_colour }} }
+          {% endif %}
+          {% if pwd_colour | length > 0 %}
+          export OVERRIDE_PWD_COLOUR=${ {{ pwd_colour }} }
+          {% endif %}
+        owner: "{{ install_user }}"
+        group: "{{ install_user }}"
+        create: yes
+      when:
+        - (hostname_colour | length > 0) or (username_colour | length > 0) or (pwd_colour | length > 0)
+        - not install_all_users | bool
+        - home_files_src_stat.stat.exists
+
+    - name: Install dotfiles for all users
+      block:
+        - name: Install dotfiles for all users
+          include_tasks: install-user-files.yml
+          vars:
+            target_user: "{{ item.key }}"
+            user_home: "{{ item.value[4] }}"
+            user_uid: "{{ item.value[1] | int }}"
+            user_shell: "{{ item.value[5] }}"
+            home_files_list: "{{ home_files.files | default([]) }}"
+            hostname_colour: "{{ hostname_colour }}"
+            username_colour: "{{ username_colour }}"
+            pwd_colour: "{{ pwd_colour }}"
+          loop: "{{ all_users.ansible_facts.getent_passwd | dict2items }}"
+          when:
+            - item.value[1] | int >= 1000 or item.key == "root"
+            - item.value[5] != "/usr/sbin/nologin" and item.value[5] != "/sbin/nologin" and item.value[5] != "/bin/false"
+            - item.value[4] | length > 0
+          ignore_errors: yes
+
+        - name: Update .over-ride file for all users with colour settings
+          blockinfile:
+            path: "{{ item.value[4] }}/.over-ride"
+            marker: "# {mark} ANSIBLE MANAGED BLOCK - Cognitify Colour Settings"
+            block: |
+              {% if hostname_colour | length > 0 %}
+              export OVERRIDE_HOSTNAME_COLOUR=${ {{ hostname_colour }} }
+              {% endif %}
+              {% if username_colour | length > 0 %}
+              export OVERRIDE_USERNAME_COLOUR=${ {{ username_colour }} }
+              {% endif %}
+              {% if pwd_colour | length > 0 %}
+              export OVERRIDE_PWD_COLOUR=${ {{ pwd_colour }} }
+              {% endif %}
+            owner: "{{ item.key }}"
+            group: "{{ item.key }}"
+            create: yes
+          loop: "{{ all_users.ansible_facts.getent_passwd | dict2items }}"
+          when:
+            - (hostname_colour | length > 0) or (username_colour | length > 0) or (pwd_colour | length > 0)
+            - item.value[1] | int >= 1000 or item.key == "root"
+            - item.value[5] != "/usr/sbin/nologin" and item.value[5] != "/sbin/nologin" and item.value[5] != "/bin/false"
+            - item.value[4] | length > 0
+          ignore_errors: yes
+      when:
+        - install_all_users | bool
         - home_files_src_stat.stat.exists
         - home_files.files | length > 0
 
@@ -474,5 +612,6 @@
       debug:
         msg:
           - "Cognitify version {{ cognitify_version }} installed successfully!"
-          - "Installed for user: {{ install_user }}"
+          - "{% if install_all_users %}Installed for all users{% else %}Installed for user: {{ install_user }}{% endif %}"
+          - "{% if colour_profile == 'random' %}Random colour profile selected: Hostname={{ hostname_colour }}, Username={{ username_colour }}, PWD={{ pwd_colour }}{% elif (hostname_colour | length > 0) or (username_colour | length > 0) or (pwd_colour | length > 0) %}Colour settings: Hostname={{ hostname_colour }}, Username={{ username_colour }}, PWD={{ pwd_colour }}{% endif %}"
           - "Please log out and log back in for changes to take effect"

@@ -1,0 +1,138 @@
+---
+# Cognitify Ansible Playbook Examples
+# (c) 2026 Ramon Brooker <rbrooker@aeo3.io>
+#
+# This file contains example playbooks and inventory configurations
+# for deploying Cognitify across a fleet of machines.
+
+# ============================================================================
+# Example 1: Fleet-wide standard colour configuration
+# ============================================================================
+# Use this for consistent colour scheme across all machines in your fleet
+---
+- name: Install Cognitify with Fleet Standard Colours
+  hosts: all
+  become: yes
+  vars:
+    hostname_colour: "AZURE"
+    username_colour: "LIME"
+    pwd_colour: "AZURE"
+    install_all_users: true
+  roles: []
+  tasks:
+    - name: Include cognitify installation
+      include_tasks: install.yml
+      vars:
+        hostname_colour: "{{ hostname_colour }}"
+        username_colour: "{{ username_colour }}"
+        pwd_colour: "{{ pwd_colour }}"
+        install_all_users: "{{ install_all_users }}"
+
+# ============================================================================
+# Example 2: Random colour profile for each machine
+# ============================================================================
+# Use this to give each machine a unique random colour scheme
+---
+- name: Install Cognitify with Random Colours
+  hosts: all
+  become: yes
+  vars:
+    colour_profile: "random"
+    install_all_users: true
+  roles: []
+  tasks:
+    - name: Include cognitify installation
+      include_tasks: install.yml
+      vars:
+        colour_profile: "{{ colour_profile }}"
+        install_all_users: "{{ install_all_users }}"
+
+# ============================================================================
+# Example 3: Environment-specific colour schemes
+# ============================================================================
+# Use this with group_vars to set different colours per environment
+---
+- name: Install Cognitify with Environment Colours
+  hosts: all
+  become: yes
+  vars:
+    install_all_users: true
+  roles: []
+  tasks:
+    - name: Include cognitify installation
+      include_tasks: install.yml
+      vars:
+        hostname_colour: "{{ cognitify_hostname_colour | default('') }}"
+        username_colour: "{{ cognitify_username_colour | default('') }}"
+        pwd_colour: "{{ cognitify_pwd_colour | default('') }}"
+        colour_profile: "{{ cognitify_colour_profile | default('') }}"
+        install_all_users: "{{ install_all_users }}"
+
+# ============================================================================
+# Example 4: Single user installation with custom colours
+# ============================================================================
+---
+- name: Install Cognitify for Specific User
+  hosts: all
+  become: yes
+  vars:
+    install_user: "deploy"
+    hostname_colour: "BRIGHT_PINK"
+    username_colour: "GOLD"
+    pwd_colour: "BRIGHT_PINK"
+  roles: []
+  tasks:
+    - name: Include cognitify installation
+      include_tasks: install.yml
+      vars:
+        install_user: "{{ install_user }}"
+        hostname_colour: "{{ hostname_colour }}"
+        username_colour: "{{ username_colour }}"
+        pwd_colour: "{{ pwd_colour }}"
+
+# ============================================================================
+# Example Inventory with Group Variables
+# ============================================================================
+# Create group_vars/production.yml:
+# ---
+# cognitify_hostname_colour: "AZURE"
+# cognitify_username_colour: "LIME"
+# cognitify_pwd_colour: "AZURE"
+#
+# Create group_vars/staging.yml:
+# ---
+# cognitify_colour_profile: "random"
+#
+# Create group_vars/development.yml:
+# ---
+# cognitify_hostname_colour: "BRIGHT_PINK"
+# cognitify_username_colour: "GOLD"
+# cognitify_pwd_colour: "BRIGHT_PINK"
+
+# ============================================================================
+# Example Command Line Usage
+# ============================================================================
+#
+# Fleet-wide standard colours:
+#   ansible-playbook -i inventory install.yml \
+#     -e "hostname_colour=AZURE" \
+#     -e "username_colour=LIME" \
+#     -e "pwd_colour=AZURE" \
+#     -e "install_all_users=true"
+#
+# Random colours for all users:
+#   ansible-playbook -i inventory install.yml \
+#     -e "colour_profile=random" \
+#     -e "install_all_users=true"
+#
+# Single user with custom colours:
+#   ansible-playbook -i inventory install.yml \
+#     -e "install_user=myuser" \
+#     -e "hostname_colour=AZURE" \
+#     -e "username_colour=LIME" \
+#     -e "pwd_colour=BRIGHT_PINK"
+#
+# Using group variables:
+#   ansible-playbook -i inventory install.yml \
+#     -e "install_all_users=true" \
+#     --limit production

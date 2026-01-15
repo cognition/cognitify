@@ -60,11 +60,37 @@ ansible-playbook -i inventory install.yml \
   -e "hostname_colour=BRIGHT_PINK"
 ```
 
+### Install for All Users with Fleet Standard Colours
+
+```bash
+ansible-playbook -i inventory install.yml \
+  -e "install_all_users=true" \
+  -e "hostname_colour=AZURE" \
+  -e "username_colour=LIME" \
+  -e "pwd_colour=AZURE"
+```
+
+### Random Colour Profile for All Users
+
+```bash
+ansible-playbook -i inventory install.yml \
+  -e "install_all_users=true" \
+  -e "colour_profile=random"
+```
+
 ### Test on Localhost
 
 ```bash
 ansible-playbook -i "localhost," -c local install.yml --become
 ```
+
+## Fleet Deployment Examples
+
+See `ansible-examples.yml` for complete examples including:
+- Fleet-wide standard colour configuration
+- Random colour profiles per machine
+- Environment-specific colour schemes
+- Group variable configurations
 
 ## Variables
 
@@ -73,9 +99,13 @@ The playbook supports the following variables:
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `install_user` | `ansible_user` | User to install dotfiles for |
+| `install_all_users` | `false` | Install for all users (UID >= 1000 or root) |
 | `skip_packages` | `false` | Skip package installation |
 | `docker_mode` | `false` | Use Docker/container mode (not fully implemented) |
 | `hostname_colour` | `""` | Set default hostname colour (e.g., AZURE, BRIGHT_PINK, OLIVE) |
+| `username_colour` | `""` | Set default username colour (e.g., LIME, GRAY, AZURE) |
+| `pwd_colour` | `""` | Set default PWD colour (e.g., AZURE, LT_BLUE, BRIGHT_PINK) |
+| `colour_profile` | `""` | Set colour profile - use `random` to randomly select from colour-combos.md |
 
 ## What Gets Installed
 

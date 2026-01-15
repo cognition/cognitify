@@ -1,0 +1,34 @@
+---
+# Helper task file for installing user dotfiles
+# Called from install.yml when install_all_users is true
+
+- name: Install dotfiles for user {{ target_user }}
+  copy:
+    src: "{{ item.path }}"
+    dest: "{{ user_home }}/.{{ item.path | basename }}"
+    owner: "{{ target_user }}"
+    group: "{{ target_user }}"
+    mode: preserve
+  loop: "{{ home_files_list }}"
+  when: home_files_list | length > 0
+
+- name: Update .over-ride file for user {{ target_user }} with colour settings
+  blockinfile:
+    path: "{{ user_home }}/.over-ride"
+    marker: "# {mark} ANSIBLE MANAGED BLOCK - Cognitify Colour Settings"
+    block: |
+      {% if hostname_colour | length > 0 %}
+      export OVERRIDE_HOSTNAME_COLOUR=${ {{ hostname_colour }} }
+      {% endif %}
+      {% if username_colour | length > 0 %}
+      export OVERRIDE_USERNAME_COLOUR=${ {{ username_colour }} }
+      {% endif %}
+      {% if pwd_colour | length > 0 %}
+      export OVERRIDE_PWD_COLOUR=${ {{ pwd_colour }} }
+      {% endif %}
+    owner: "{{ target_user }}"
+    group: "{{ target_user }}"
+    create: yes
+  when:
+    - (hostname_colour | length > 0) or (username_colour | length > 0) or (pwd_colour | length > 0)
+    - user_home | length > 0

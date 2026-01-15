@@ -31,7 +31,9 @@ if [[  -f ${BASE_PATH}/environmentrc ]] ; then
    source ${BASE_PATH}/environmentrc
 fi
 
-if [[  -f ${BASE_PATH}/promptrc ]] ; then
+if [[  -f /etc/prompts/promptrc ]] ; then
+   source /etc/prompts/promptrc
+elif [[  -f ${BASE_PATH}/promptrc ]] ; then
    source ${BASE_PATH}/promptrc
 fi
 

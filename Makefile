@@ -19,6 +19,8 @@ CONFIG_DEST ?= $(ETC_DIR)/bash.bashrc.d
 COMPLETIONS_DEST ?= $(ETC_DIR)/bash_completion.d
 SRC_DIR ?= src
 CONFIG_SRC ?= $(SRC_DIR)/bash.bashrc.d
+PROMPTS_SRC ?= $(SRC_DIR)/prompts
+PROMPTS_DEST ?= $(ETC_DIR)/prompts
 HOME_FILES_SRC ?= $(SRC_DIR)/home-files
 HOME_FILES_EXTENDED_SRC ?= $(SRC_DIR)/home-files-extended
 COMPLETIONS_SRC ?= $(SRC_DIR)/completions
@@ -47,7 +49,7 @@ GREEN := \033[0;32m
 YELLOW := \033[0;33m
 NC := \033[0m # No Colour
 
-.PHONY: help all install install-root install-all install-config install-completions install-home install-bin install-docs install-man install-distro install-profile-d install-skel post-install clean uninstall check-root
+.PHONY: help all install install-root install-all install-config install-prompts install-completions install-home install-bin install-docs install-man install-distro install-profile-d install-skel post-install clean uninstall check-root
 
 help: ## Show this help message
 	@echo "Cognitify Build System"
@@ -79,7 +81,7 @@ check-root: ## Check if running as root (for install targets)
 		exit 1; \
 	fi
 
-install: check-root all install-config install-completions install-home install-bin install-distro install-docs install-man install-profile-d install-skel post-install ## Install all components
+install: check-root all install-config install-prompts install-completions install-home install-bin install-distro install-docs install-man install-profile-d install-skel post-install ## Install all components
 	@echo ""
 	@echo "$(GREEN)[cognitify]$(NC) Installation completed successfully!"
 	@echo "$(GREEN)[cognitify]$(NC) Version $(VERSION) installed"
@@ -115,30 +117,49 @@ install-config: check-root ## Install bash configuration files
 	@chmod 644 "$(CONFIG_DEST)/.cognitify-version"
 	@echo "$(GREEN)[cognitify]$(NC) Configuration installed to $(CONFIG_DEST)"
 
-install-completions: check-root ## Install shell completions (standard and optionally extended)
+install-prompts: check-root ## Install prompt configuration files
+	@echo "$(GREEN)[cognitify]$(NC) Installing prompt files..."
+	@if [ ! -d "$(PROMPTS_SRC)" ]; then \
+		echo "$(YELLOW)Warning: Prompts source not found: $(PROMPTS_SRC)$(NC)" >&2; \
+		exit 0; \
+	fi
+	@install -d -m 775 -o root -g "$(GROUP_NAME)" "$(PROMPTS_DEST)" || \
+		(if ! getent group "$(GROUP_NAME)" >/dev/null 2>&1; then \
+			echo "$(GREEN)[cognitify]$(NC) Creating group $(GROUP_NAME)..."; \
+			groupadd "$(GROUP_NAME)"; \
+		fi; \
+		install -d -m 775 -o root -g "$(GROUP_NAME)" "$(PROMPTS_DEST)")
+	@if [ -d "$(PROMPTS_SRC)/lib" ]; then \
+		install -d -m 775 -o root -g "$(GROUP_NAME)" "$(PROMPTS_DEST)/lib"; \
+		cp -R "$(PROMPTS_SRC)/lib/." "$(PROMPTS_DEST)/lib/"; \
+		chown -R root:"$(GROUP_NAME)" "$(PROMPTS_DEST)/lib"; \
+		chmod -R 775 "$(PROMPTS_DEST)/lib"; \
+	fi
+	@for file in "$(PROMPTS_SRC)"/*; do \
+		[ -f "$$file" ] || continue; \
+		install -m 644 "$$file" "$(PROMPTS_DEST)/"; \
+		chown root:"$(GROUP_NAME)" "$(PROMPTS_DEST)/$$(basename "$$file")"; \
+	done
+	@echo "$(PROMPTS_DEST)/.cognitify-version" | xargs -I {} sh -c 'echo "$(VERSION)" > {}'
+	@chmod 644 "$(PROMPTS_DEST)/.cognitify-version"
+	@echo "$(GREEN)[cognitify]$(NC) Prompts installed to $(PROMPTS_DEST)"
+
+install-completions: check-root ## Install shell completions
 	@echo "$(GREEN)[cognitify]$(NC) Installing shell completions..."
 	@if [ ! -d "$(COMPLETIONS_SRC)" ]; then \
 		echo "$(YELLOW)Warning: Completions source not found: $(COMPLETIONS_SRC)$(NC)" >&2; \
+		exit 0; \
+	fi
+	@if [ -z "$$(find "$(COMPLETIONS_SRC)" -maxdepth 1 -type f 2>/dev/null)" ]; then \
+		echo "$(YELLOW)Warning: No completion files found in $(COMPLETIONS_SRC)$(NC)" >&2; \
 		exit 0; \
 	fi
 	@install -d -m 755 "$(COMPLETIONS_DEST)"
 	@for file in "$(COMPLETIONS_SRC)"/*; do \
 		[ -f "$$file" ] || continue; \
 		install -m 644 "$$file" "$(COMPLETIONS_DEST)/"; \
-		echo "$(GREEN)[cognitify]$(NC) Installed standard completion: $$(basename "$$file")"; \
+		echo "$(GREEN)[cognitify]$(NC) Installed completion: $$(basename "$$file")"; \
 	done
-	@if [ "$(EXTENDED_COMPLETIONS)" = "yes" ]; then \
-		if [ -d "$(COMPLETIONS_EXTENDED_SRC)" ]; then \
-			echo "$(GREEN)[cognitify]$(NC) Installing extended completions..."; \
-			for file in "$(COMPLETIONS_EXTENDED_SRC)"/*; do \
-				[ -f "$$file" ] || continue; \
-				install -m 644 "$$file" "$(COMPLETIONS_DEST)/"; \
-				echo "$(GREEN)[cognitify]$(NC) Installed extended completion: $$(basename "$$file")"; \
-			done; \
-		else \
-			echo "$(YELLOW)Warning: Extended completions source not found: $(COMPLETIONS_EXTENDED_SRC)$(NC)" >&2; \
-		fi; \
-	fi
 	@echo "$(GREEN)[cognitify]$(NC) Completions installed to $(COMPLETIONS_DEST)"
 
 install-home: check-root ## Install user dotfiles
@@ -249,25 +270,6 @@ install-home: check-root ## Install user dotfiles
 			cp "$$file" "$$dest"; \
 			chown "$(INSTALL_USER):$$USER_GROUP" "$$dest" 2>/dev/null || chown "$(INSTALL_USER)" "$$dest"; \
 		done; \
-		if [ "$(EXTENDED_HOME_FILES)" = "yes" ]; then \
-			if [ -d "$(HOME_FILES_EXTENDED_SRC)" ]; then \
-				echo "$(GREEN)[cognitify]$(NC) Installing extended home files..."; \
-				for file in "$(HOME_FILES_EXTENDED_SRC)"/*; do \
-					[ -f "$$file" ] || continue; \
-					base=".$$(basename "$$file")"; \
-					dest="$$HOME_DIR/$$base"; \
-					if [ -e "$$dest" ] && [ ! -e "$$dest.orig" ]; then \
-						cp "$$dest" "$$dest.orig"; \
-						echo "$(GREEN)[cognitify]$(NC) Backed up existing $$base to $$base.orig"; \
-					fi; \
-					cp "$$file" "$$dest"; \
-					chown "$(INSTALL_USER):$$USER_GROUP" "$$dest" 2>/dev/null || chown "$(INSTALL_USER)" "$$dest"; \
-					echo "$(GREEN)[cognitify]$(NC) Installed extended home file: $$base"; \
-				done; \
-			else \
-				echo "$(YELLOW)Warning: Extended home files source not found: $(HOME_FILES_EXTENDED_SRC)$(NC)" >&2; \
-			fi; \
-		fi; \
 		echo "$(GREEN)[cognitify]$(NC) Home files installed to $$HOME_DIR"; \
 	fi
 
@@ -352,20 +354,6 @@ install-skel: check-root ## Install dotfiles to /etc/skel for new users
 		install -m 644 "$$file" "$$dest"; \
 		echo "$(GREEN)[cognitify]$(NC) Installed $$base to $(SKEL_DEST)"; \
 	done
-	@if [ "$(EXTENDED_HOME_FILES)" = "yes" ]; then \
-		if [ -d "$(HOME_FILES_EXTENDED_SRC)" ]; then \
-			echo "$(GREEN)[cognitify]$(NC) Installing extended home files to /etc/skel..."; \
-			for file in "$(HOME_FILES_EXTENDED_SRC)"/*; do \
-				[ -f "$$file" ] || continue; \
-				base=".$$(basename "$$file")"; \
-				dest="$(SKEL_DEST)/$$base"; \
-				install -m 644 "$$file" "$$dest"; \
-				echo "$(GREEN)[cognitify]$(NC) Installed extended $$base to $(SKEL_DEST)"; \
-			done; \
-		else \
-			echo "$(YELLOW)Warning: Extended home files source not found: $(HOME_FILES_EXTENDED_SRC)$(NC)" >&2; \
-		fi; \
-	fi
 	@echo "$(GREEN)[cognitify]$(NC) Dotfiles installed to $(SKEL_DEST)"
 
 post-install: check-root ## Run post-installation script (package installation)
@@ -378,7 +366,7 @@ post-install: check-root ## Run post-installation script (package installation)
 		exit 0; \
 	fi
 	@echo "$(GREEN)[cognitify]$(NC) Running post-installation package script..."
-	@./post-install.sh "$(PKG_MANAGER)" "$(PKG_MANAGER_INSTALL)" "$(PKG_MANAGER_UPDATE)" "$(PACKAGES_DIR)" "$(INCLUDE_GUI)" "$(DOCKER_MODE)"
+	@./post-install.sh "$(PKG_MANAGER)" "$(PKG_MANAGER_INSTALL)" "$(PKG_MANAGER_UPDATE)" "$(PACKAGES_DIR)" "no" "$(DOCKER_MODE)"
 
 clean: ## Clean build artifacts
 	@echo "$(GREEN)[cognitify]$(NC) Cleaning..."
@@ -395,6 +383,7 @@ uninstall: check-root ## Uninstall cognitify (removes files but keeps backups)
 		exit 0; \
 	fi
 	@rm -rf "$(CONFIG_DEST)"
+	@rm -rf "$(PROMPTS_DEST)" 2>/dev/null || true
 	@rm -rf "$(COMPLETIONS_DEST)"/*cognitify* 2>/dev/null || true
 	@HOME_DIR=$$(getent passwd "$(INSTALL_USER)" | cut -d: -f6); \
 	if [ -n "$$HOME_DIR" ] && [ -d "$$HOME_DIR" ]; then \

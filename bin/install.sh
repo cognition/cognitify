@@ -7,15 +7,16 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SRC_DIR="$ROOT_DIR/src"
 CONFIG_SRC="$SRC_DIR/bash.bashrc.d"
+PROMPTS_SRC="$SRC_DIR/prompts"
 HOME_FILES_SRC="$SRC_DIR/home-files"
 COMPLETIONS_SRC="$SRC_DIR/completions"
 PACKAGES_DIR="$SRC_DIR/packages"
 
 CONFIG_DEST="/etc/bash.bashrc.d"
+PROMPTS_DEST="/etc/prompts"
 COMPLETIONS_DEST="/etc/bash_completion.d"
 GROUP_NAME="cognitify"
 TARGET_USER="${SUDO_USER:-${USER}}"
-INCLUDE_GUI=false
 SKIP_PACKAGES=false
 
 usage() {
@@ -24,7 +25,6 @@ Usage: sudo bin/install.sh [options]
 
 Options:
   --user <name>        Install dotfiles for a specific user (default: ${TARGET_USER}).
-  --include-gui        Install GUI-related packages when available for the distro.
   --skip-packages      Skip package installation entirely.
   -h, --help           Show this help message.
 USAGE
@@ -47,10 +47,6 @@ parse_args() {
                 TARGET_USER="$2"
                 shift 2
                 ;;
-            --include-gui)
-                INCLUDE_GUI=true
-                shift
-                ;;
             --skip-packages)
                 SKIP_PACKAGES=true
                 shift
@@ -68,7 +64,7 @@ parse_args() {
 }
 
 assert_paths() {
-    for path in "$CONFIG_SRC" "$HOME_FILES_SRC" "$COMPLETIONS_SRC"; do
+    for path in "$CONFIG_SRC" "$HOME_FILES_SRC"; do
         if [[ ! -d $path ]]; then
             error "Required directory missing: $path"
             exit 1
@@ -100,23 +96,18 @@ collect_packages() {
     local manager="$1"
     local manager_file=""
     case "$manager" in
-        apt-get)
-            manager_file="$PACKAGES_DIR/PACKAGES_APT"
-            ;;
         yum|dnf)
             manager_file="$PACKAGES_DIR/PACKAGES_YUM"
-            ;;
-        zypper)
-            manager_file="$PACKAGES_DIR/PACKAGES_ZYPPER"
             ;;
     esac
 
     local -a packages=()
-    while IFS= read -r pkg; do packages+=("$pkg"); done < <(read_packages "$PACKAGES_DIR/GENERAL")
-    if $INCLUDE_GUI; then
-        while IFS= read -r pkg; do packages+=("$pkg"); done < <(read_packages "$PACKAGES_DIR/GENERAL_GUI")
+    # Read GENERAL packages if it exists
+    if [[ -f "$PACKAGES_DIR/GENERAL" ]]; then
+        while IFS= read -r pkg; do packages+=("$pkg"); done < <(read_packages "$PACKAGES_DIR/GENERAL")
     fi
-    if [[ -n $manager_file ]]; then
+    # Read manager-specific packages if file exists
+    if [[ -n $manager_file ]] && [[ -f "$manager_file" ]]; then
         while IFS= read -r pkg; do packages+=("$pkg"); done < <(read_packages "$manager_file")
     fi
 
@@ -141,18 +132,15 @@ install_packages() {
 
     log "Installing packages using $manager..."
     case "$manager" in
-        apt-get)
-            apt-get update
-            DEBIAN_FRONTEND=noninteractive apt-get install -y "${packages[@]}"
-            ;;
         yum)
             yum install -y "${packages[@]}"
             ;;
         dnf)
             dnf install -y "${packages[@]}"
             ;;
-        zypper)
-            zypper --non-interactive install --auto-agree-with-licenses "${packages[@]}"
+        *)
+            log "Package manager '$manager' not supported in this pared-down version"
+            return
             ;;
     esac
 }
@@ -183,7 +171,32 @@ install_configs() {
     log "Installed bash configuration into $CONFIG_DEST"
 }
 
+install_prompts() {
+    if [[ ! -d "$PROMPTS_SRC" ]]; then
+        log "Prompts directory not found, skipping prompt installation"
+        return
+    fi
+    
+    install -d -m 775 -o root -g "$GROUP_NAME" "$PROMPTS_DEST"
+    if [[ -d "$PROMPTS_SRC/lib" ]]; then
+        install -d -m 775 -o root -g "$GROUP_NAME" "$PROMPTS_DEST/lib"
+        cp -R "$PROMPTS_SRC/lib/." "$PROMPTS_DEST/lib/"
+        chown -R root:"$GROUP_NAME" "$PROMPTS_DEST/lib"
+        chmod -R 775 "$PROMPTS_DEST/lib"
+    fi
+    for file in "$PROMPTS_SRC"/*; do
+        [[ -f "$file" ]] || continue
+        install -m 644 "$file" "$PROMPTS_DEST/"
+        chown root:"$GROUP_NAME" "$PROMPTS_DEST/$(basename "$file")"
+    done
+    log "Installed prompt configuration into $PROMPTS_DEST"
+}
+
 install_completions() {
+    if [[ ! -d "$COMPLETIONS_SRC" ]] || [[ -z "$(find "$COMPLETIONS_SRC" -maxdepth 1 -type f)" ]]; then
+        log "No completions found, skipping completion installation"
+        return
+    fi
     install -d -m 755 "$COMPLETIONS_DEST"
     find "$COMPLETIONS_SRC" -maxdepth 1 -type f -print0 | while IFS= read -r -d '' file; do
         install -m 644 "$file" "$COMPLETIONS_DEST/"
@@ -222,6 +235,7 @@ main() {
     ensure_group
     ensure_user_in_group
     install_configs
+    install_prompts
     install_completions
     install_home_files
     log "Installation completed successfully."

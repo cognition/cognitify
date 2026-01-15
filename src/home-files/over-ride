@@ -1,4 +1,4 @@
-## (c) 2025
+## (c) 2026
 ## Ramon Brooker
 ## rbrooker@aeo3.io
 
@@ -37,10 +37,7 @@ export OVERRIDE_HOSTNAME_COLOUR=${BRIGHT_PINK}
 export OVERRIDE_USERNAME_COLOUR=${LIME}
 export OVERRIDE_PWD_COLOUR=${BRIGHT_PINK}
 
-## You can customise your prompt using these
-# OVERRIDE_HOSTNAME_COLOUR
-# OVERRIDE_USERNAME_COLOUR
-# OVERRIDE_PWD_COLOUR
+
 
 export SCRIPT_SIGNATURE_BLOCK=$(cat <<EOF
 #!/bin/bash

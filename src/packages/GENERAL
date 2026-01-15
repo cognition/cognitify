@@ -3,22 +3,12 @@
 # (c) 2025 Ramon Brooker <rbrooker@aeo3.io>
 
 bash-completion
-git
-cockpit
-cockpit-bridge
-sqlite3
 tree
-unzip
-zip
 expect
 curl
 wget
-hwinfo
 jq
 fq
 dos2unix
 vim
-neovim
-openssl
-pwgen
 rsync

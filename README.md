@@ -4,32 +4,33 @@ Cognitify is a set of Linux shell customisations packaged for easy reuse across 
 
 ## What's in the box
 
-- **Bash runtime fragments** (`src/bash.bashrc.d`): prompt, environment, alias, and function snippets intended for `/etc/bash.bashrc.d`.
+- **Bash runtime fragments** (`src/bash.bashrc.d`): environment, alias, and function snippets intended for `/etc/bash.bashrc.d`.
+- **Prompt configuration** (`src/prompts`): isolated prompt configuration files including colour definitions, intended for `/etc/prompts`.
 - **User dotfiles** (`src/home-files`): templates for `.bashrc`, `.bash_logout`, `.gitconfig`, `.vimrc`, and other helpful defaults.
-- **Shell completions** (`src/completions`): upstream completion files for tools such as `kubectl`, `helm`, `terraform`, `nerdctl`, and more.
-- **Package manifests** (`src/packages`): general CLI and GUI package sets plus package-manager-specific add-ons for apt, yum/dnf, and zypper.
-- **Installer** (`bin/install.sh`): bootstraps packages, installs system-wide Bash configuration, copies completions, and syncs dotfiles for the chosen user.
+- **Shell completions** (`src/completions`): completion files for common CLI tools.
+- **Package manifests** (`src/packages`): general CLI package sets plus package-manager-specific add-ons for yum/dnf.
+- **Installer** (`bin/install.sh`): bootstraps packages, installs system-wide Bash configuration and prompts, copies completions, and syncs dotfiles for the chosen user.
 
 ## Installation
 
 Run the installer as root (or via `sudo`) from the repository root:
 
 ```bash
-sudo bin/install.sh [--user <name>] [--include-gui] [--skip-packages]
+sudo bin/install.sh [--user <name>] [--skip-packages]
 ```
 
 Flags:
 
 - `--user <name>`: install dotfiles for a specific user (defaults to `SUDO_USER` or the invoking user).
-- `--include-gui`: include optional GUI tools from `src/packages/GENERAL_GUI` when installing packages.
 - `--skip-packages`: skip package installation entirely.
 
 What the installer does:
 
-1. Detects a supported package manager (apt, yum, dnf, or zypper) and installs packages defined in `src/packages/GENERAL`, the distro-specific manifest, and optional GUI packages.
+1. Detects a supported package manager (yum or dnf) and installs packages defined in `src/packages/GENERAL` and the distro-specific manifest (`PACKAGES_YUM`).
 2. Creates (or reuses) the `cognitify` group, adds the target user to it, and installs `/etc/bash.bashrc.d` fragments with `root:cognitify` ownership.
-3. Copies completions into `/etc/bash_completion.d`.
-4. Copies dotfiles into the target user's home directory, backing up any existing files to `.orig` once.
+3. Installs prompt configuration files to `/etc/prompts`.
+4. Copies completions into `/etc/bash_completion.d` (if any exist).
+5. Copies dotfiles into the target user's home directory, backing up any existing files to `.orig` once.
 
 ## Maintenance
 

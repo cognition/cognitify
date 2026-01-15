@@ -25,15 +25,11 @@ The configure script detects your Linux distribution and sets up the build confi
 - `--prefix=DIR` - Installation prefix (default: `/usr/local`)
 - `--etc-dir=DIR` - System configuration directory (default: `/etc`)
 - `--user=USER` - User to install dotfiles for (default: current user)
-- `--include-gui` - Include GUI packages in installation
 - `--skip-packages` - Skip package installation
 - `--help` - Show help message
 
 **Examples:**
 ```bash
-# Install with GUI packages
-./configure --include-gui
-
 # Install to custom prefix
 ./configure --prefix=/usr
 
@@ -49,7 +45,6 @@ You can also set these via environment variables:
 - `PREFIX` - Installation prefix
 - `ETC_DIR` - System configuration directory
 - `INSTALL_USER` - User for dotfiles installation
-- `INCLUDE_GUI` - Set to `yes` to include GUI packages
 - `SKIP_PACKAGES` - Set to `yes` to skip package installation
 
 The configure script generates a `config.mk` file with all build settings.
@@ -105,10 +100,7 @@ After installing files, the post-installation script (`post-install.sh`) automat
 
 **Package files:**
 - `src/packages/GENERAL` - Packages common to all distributions
-- `src/packages/GENERAL_GUI` - GUI packages (optional, use `--include-gui`)
-- `src/packages/PACKAGES_APT` - Debian/Ubuntu specific packages
-- `src/packages/PACKAGES_YUM` - RHEL/CentOS/Fedora specific packages
-- `src/packages/PACKAGES_ZYPPER` - openSUSE/SLES specific packages
+- `src/packages/PACKAGES_YUM` - RHEL/CentOS/Fedora specific packages (yum/dnf)
 
 ## Uninstallation
 

@@ -27,10 +27,8 @@ declare -A DISTRO_PKG_MANAGER=(
 
 # Package manager to package file mapping
 declare -A PKG_MANAGER_FILE=(
-    ["apt-get"]="PACKAGES_APT"
     ["yum"]="PACKAGES_YUM"
     ["dnf"]="PACKAGES_YUM"
-    ["zypper"]="PACKAGES_ZYPPER"
 )
 
 log() {
@@ -152,19 +150,12 @@ create_package() {
         cp "src/packages/GENERAL" "$package_dir/src/packages/"
     fi
     
-    # Include GENERAL_GUI
-    if [[ -f "src/packages/GENERAL_GUI" ]]; then
-        cp "src/packages/GENERAL_GUI" "$package_dir/src/packages/"
-    fi
-    
-    # Include distro-specific package file
+    # Include distro-specific package file if it exists
     if [[ -n "$pkg_file" ]] && [[ -f "src/packages/$pkg_file" ]]; then
         cp "src/packages/$pkg_file" "$package_dir/src/packages/"
         log "Included package file: $pkg_file"
-    else
-        # Create empty file if it doesn't exist
-        touch "$package_dir/src/packages/$pkg_file"
-        warn "Package file $pkg_file not found, created empty file"
+    elif [[ -n "$pkg_file" ]]; then
+        warn "Package file $pkg_file not found, skipping"
     fi
     
     # Include distro-specific files

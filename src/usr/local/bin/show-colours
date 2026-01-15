@@ -4,10 +4,16 @@
 
 # Source the colour definitions if available
 COLOUR_FILE=""
-if [[ -f /etc/bash.bashrc.d/lib/cognitifyColours ]]; then
+if [[ -f /etc/prompts/lib/cognitifyColours ]]; then
+    COLOUR_FILE="/etc/prompts/lib/cognitifyColours"
+elif [[ -f /etc/bash.bashrc.d/lib/cognitifyColours ]]; then
     COLOUR_FILE="/etc/bash.bashrc.d/lib/cognitifyColours"
+elif [[ -f "src/prompts/lib/cognitifyColours" ]]; then
+    COLOUR_FILE="src/prompts/lib/cognitifyColours"
 elif [[ -f "src/bash.bashrc.d/lib/cognitifyColours" ]]; then
     COLOUR_FILE="src/bash.bashrc.d/lib/cognitifyColours"
+elif [[ -f "${BASH_SOURCE[0]%/*}/../../src/prompts/lib/cognitifyColours" ]]; then
+    COLOUR_FILE="${BASH_SOURCE[0]%/*}/../../src/prompts/lib/cognitifyColours"
 elif [[ -f "${BASH_SOURCE[0]%/*}/../../src/bash.bashrc.d/lib/cognitifyColours" ]]; then
     COLOUR_FILE="${BASH_SOURCE[0]%/*}/../../src/bash.bashrc.d/lib/cognitifyColours"
 fi

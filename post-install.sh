@@ -68,17 +68,11 @@ collect_packages() {
     
     # Determine manager-specific package file
     case "$PKG_MANAGER" in
-        apt-get)
-            manager_file="$PACKAGES_DIR/PACKAGES_APT"
-            ;;
         yum|dnf)
             manager_file="$PACKAGES_DIR/PACKAGES_YUM"
             ;;
-        zypper)
-            manager_file="$PACKAGES_DIR/PACKAGES_ZYPPER"
-            ;;
         *)
-            warn "Unknown package manager: $PKG_MANAGER"
+            warn "Package manager '$PKG_MANAGER' not supported in this pared-down version"
             ;;
     esac
     
@@ -92,12 +86,7 @@ collect_packages() {
         [[ -n "$pkg" ]] && packages+=("$pkg")
     done < <(read_packages "$general_file")
     
-    # Read GUI packages if requested
-    if [[ "$INCLUDE_GUI" = "yes" ]]; then
-        while IFS= read -r pkg; do
-            [[ -n "$pkg" ]] && packages+=("$pkg")
-        done < <(read_packages "$PACKAGES_DIR/GENERAL_GUI")
-    fi
+    # GUI packages removed in pared-down version
     
     # Read manager-specific packages
     if [[ -n "$manager_file" ]] && [[ -f "$manager_file" ]]; then
@@ -131,12 +120,6 @@ install_packages() {
     
     # Install packages
     case "$PKG_MANAGER" in
-        apt-get)
-            DEBIAN_FRONTEND=noninteractive apt-get install -y "${packages[@]}" || {
-                error "Failed to install packages"
-                return 1
-            }
-            ;;
         yum)
             yum install -y "${packages[@]}" || {
                 error "Failed to install packages"
@@ -149,15 +132,9 @@ install_packages() {
                 return 1
             }
             ;;
-        zypper)
-            zypper --non-interactive install --auto-agree-with-licenses "${packages[@]}" || {
-                error "Failed to install packages"
-                return 1
-            }
-            ;;
         *)
-            error "Unsupported package manager: $PKG_MANAGER"
-            return 1
+            warn "Package manager '$PKG_MANAGER' not supported in this pared-down version"
+            return 0
             ;;
     esac
     

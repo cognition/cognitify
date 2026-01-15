@@ -11,6 +11,7 @@ HOME_DIR="${HOME_DIR:-$HOME}"
 INSTALL_USER="${INSTALL_USER:-${SUDO_USER:-${USER}}}"
 SKIP_PACKAGES="${SKIP_PACKAGES:-no}"
 DOCKER_MODE="${DOCKER_MODE:-no}"
+HOSTNAME_COLOUR="${HOSTNAME_COLOUR:-}"
 
 # Output file
 CONFIG_FILE="config.mk"
@@ -134,6 +135,14 @@ parse_args() {
                 DISTRO_PACKAGE="$2"
                 shift 2
                 ;;
+            --hostname-colour=*)
+                HOSTNAME_COLOUR="${1#*=}"
+                shift
+                ;;
+            --hostname-colour)
+                HOSTNAME_COLOUR="$2"
+                shift 2
+                ;;
             --help|-h)
                 cat <<EOF
 Usage: $0 [OPTIONS]
@@ -145,6 +154,7 @@ Options:
   --root                 Install dotfiles for root user (equivalent to --user=root)
   --skip-packages        Skip package installation
   --docker               Use Docker/container mode (uses pared down package list)
+  --hostname-colour=COLOUR Set default hostname colour (e.g., AZURE, BRIGHT_PINK, OLIVE)
   --distro-package=DISTRO Create distribution-specific package (e.g., rocky, ubuntu)
   --help, -h             Show this help message
 
@@ -154,10 +164,13 @@ Environment variables:
   INSTALL_USER           User for dotfiles installation
   SKIP_PACKAGES          Set to 'yes' to skip package installation
   DOCKER_MODE            Set to 'yes' to use Docker/container mode
+  HOSTNAME_COLOUR        Set default hostname colour (e.g., AZURE, BRIGHT_PINK, OLIVE)
 
 Examples:
-  $0 --prefix=/usr --include-gui
+  $0 --prefix=/usr
   $0 --user=john --skip-packages
+  $0 --hostname-colour=AZURE
+  $0 --hostname-colour=BRIGHT_PINK --skip-packages
 EOF
                 exit 0
                 ;;
@@ -199,8 +212,7 @@ PKG_MANAGER_UPDATE = ${PKG_MANAGER_UPDATE}
 # Build options
 SKIP_PACKAGES = ${SKIP_PACKAGES}
 DOCKER_MODE = ${DOCKER_MODE}
-EXTENDED_COMPLETIONS = ${EXTENDED_COMPLETIONS}
-EXTENDED_HOME_FILES = ${EXTENDED_HOME_FILES}
+HOSTNAME_COLOUR = ${HOSTNAME_COLOUR}
 
 # Source directories
 SRC_DIR = src
@@ -225,6 +237,9 @@ EOF
     echo "  Install User: ${INSTALL_USER}"
     echo "  Skip Packages: ${SKIP_PACKAGES}"
     echo "  Docker Mode: ${DOCKER_MODE}"
+    if [[ -n "${HOSTNAME_COLOUR}" ]]; then
+        echo "  Hostname Colour: ${HOSTNAME_COLOUR}"
+    fi
     echo ""
     echo "Next steps:"
     echo "  make          - Build the project"

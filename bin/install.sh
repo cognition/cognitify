@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # Cognitify installer
-# (c) 2025 Ramon Brooker <rbrooker@aeo3.io>
+# (c) 2026 Ramon Brooker <rbrooker@aeo3.io>
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SRC_DIR="$ROOT_DIR/src"

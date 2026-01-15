@@ -19,7 +19,7 @@ note-addition "note text"
 **Example:**
 ```bash
 note-addition "Installed new package"
-# Appends: "Installed new package -- Wed Dec 03 2025 - 14:30:45"
+# Appends: "Installed new package -- Wed Dec 03 2026 - 14:30:45"
 ```
 
 ---

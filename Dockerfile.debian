@@ -1,5 +1,5 @@
 # Dockerfile for testing Cognitify on Debian
-# (c) 2025 Ramon Brooker <rbrooker@aeo3.io>
+# (c) 2026 Ramon Brooker <rbrooker@aeo3.io>
 
 FROM debian:latest
 

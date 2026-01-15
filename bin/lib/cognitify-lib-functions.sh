@@ -1,6 +1,6 @@
 #!/bin/bash 
 
-## (C) 2023
+## (C) 2026
 ## Ramon Brooker <rbrooker@aeo3.io>
 
 # Variables defined here are exported for use in other scripts

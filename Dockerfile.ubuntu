@@ -1,5 +1,5 @@
 # Dockerfile for testing Cognitify on Ubuntu
-# (c) 2025 Ramon Brooker <rbrooker@aeo3.io>
+# (c) 2026 Ramon Brooker <rbrooker@aeo3.io>
 
 FROM ubuntu:latest
 

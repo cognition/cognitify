@@ -1,5 +1,5 @@
 # Dockerfile for testing Cognitify on openSUSE
-# (c) 2025 Ramon Brooker <rbrooker@aeo3.io>
+# (c) 2026 Ramon Brooker <rbrooker@aeo3.io>
 
 FROM opensuse/leap:latest
 

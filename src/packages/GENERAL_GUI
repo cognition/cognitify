@@ -1,6 +1,6 @@
 # GUI packages - optional packages for graphical environments
 # These packages are installed when --include-gui flag is used
-# (c) 2025 Ramon Brooker <rbrooker@aeo3.io>
+# (c) 2026 Ramon Brooker <rbrooker@aeo3.io>
 
 yakuake
 konsole

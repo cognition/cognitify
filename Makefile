@@ -31,6 +31,8 @@ PROFILE_D_DEST ?= $(ETC_DIR)/profile.d
 SKEL_DEST ?= $(ETC_DIR)/skel
 DOCKER_MODE ?= no
 HOSTNAME_COLOUR ?=
+USERNAME_COLOUR ?=
+PWD_COLOUR ?=
 EXTENDED_COMPLETIONS ?= no
 EXTENDED_HOME_FILES ?= no
 # Allow ROOT=1 to override INSTALL_USER (even if set in config.mk)
@@ -249,6 +251,71 @@ install-home: check-root ## Install user dotfiles
 					fi; \
 				done; \
 			fi; \
+			# Update colour settings in .over-ride if specified \
+			if [ -n "$(HOSTNAME_COLOUR)" ] || [ -n "$(USERNAME_COLOUR)" ] || [ -n "$(PWD_COLOUR)" ]; then \
+				OVERRIDE_FILE="$$home_dir/.over-ride"; \
+				if [ -f "$$OVERRIDE_FILE" ]; then \
+					TEMP_FILE=$$(mktemp); \
+					awk -v hc="$(HOSTNAME_COLOUR)" -v uc="$(USERNAME_COLOUR)" -v pc="$(PWD_COLOUR)" '\
+						BEGIN { \
+							hostname_set = 0; \
+							username_set = 0; \
+							pwd_set = 0; \
+						} \
+						/^export OVERRIDE_HOSTNAME_COLOUR=/ { \
+							if (hc != "") { \
+								print "export OVERRIDE_HOSTNAME_COLOUR=${" hc "}"; \
+								hostname_set = 1; \
+							} \
+							next \
+						} \
+						/^export OVERRIDE_USERNAME_COLOUR=/ { \
+							if (uc != "") { \
+								print "export OVERRIDE_USERNAME_COLOUR=${" uc "}"; \
+								username_set = 1; \
+							} \
+							next \
+						} \
+						/^export OVERRIDE_PWD_COLOUR=/ { \
+							if (pc != "") { \
+								print "export OVERRIDE_PWD_COLOUR=${" pc "}"; \
+								pwd_set = 1; \
+							} \
+							next \
+						} \
+						/SCRIPT_SIGNATURE_BLOCK/ { \
+							if (hc != "" && !hostname_set) { \
+								print "export OVERRIDE_HOSTNAME_COLOUR=${" hc "}"; \
+								hostname_set = 1; \
+							} \
+							if (uc != "" && !username_set) { \
+								print "export OVERRIDE_USERNAME_COLOUR=${" uc "}"; \
+								username_set = 1; \
+							} \
+							if (pc != "" && !pwd_set) { \
+								print "export OVERRIDE_PWD_COLOUR=${" pc "}"; \
+								pwd_set = 1; \
+							} \
+							print; \
+							next \
+						} \
+						{ print } \
+						END { \
+							if (hc != "" && !hostname_set) { \
+								print "export OVERRIDE_HOSTNAME_COLOUR=${" hc "}"; \
+							} \
+							if (uc != "" && !username_set) { \
+								print "export OVERRIDE_USERNAME_COLOUR=${" uc "}"; \
+							} \
+							if (pc != "" && !pwd_set) { \
+								print "export OVERRIDE_PWD_COLOUR=${" pc "}"; \
+							} \
+						} \
+					' "$$OVERRIDE_FILE" > "$$TEMP_FILE"; \
+					mv "$$TEMP_FILE" "$$OVERRIDE_FILE"; \
+					chown "$$username:$$USER_GROUP" "$$OVERRIDE_FILE" 2>/dev/null || chown "$$username" "$$OVERRIDE_FILE"; \
+				fi; \
+			fi; \
 			if [ "$$USER_FAILED" -eq 1 ]; then \
 				FAILED_COUNT=$$((FAILED_COUNT + 1)); \
 			fi; \
@@ -310,6 +377,73 @@ install-home: check-root ## Install user dotfiles
 				done; \
 			else \
 				echo "$(YELLOW)Warning: Extended home files source not found: $(HOME_FILES_EXTENDED_SRC)$(NC)" >&2; \
+			fi; \
+		fi; \
+		if [ -n "$(HOSTNAME_COLOUR)" ] || [ -n "$(USERNAME_COLOUR)" ] || [ -n "$(PWD_COLOUR)" ]; then \
+			echo "$(GREEN)[cognitify]$(NC) Updating colour settings in .over-ride..."; \
+			OVERRIDE_FILE="$$HOME_DIR/.over-ride"; \
+			if [ -f "$$OVERRIDE_FILE" ]; then \
+				# Create temporary file for updating \
+				TEMP_FILE=$$(mktemp); \
+				# Process file and update colour settings \
+				awk -v hc="$(HOSTNAME_COLOUR)" -v uc="$(USERNAME_COLOUR)" -v pc="$(PWD_COLOUR)" '\
+					BEGIN { \
+						hostname_set = 0; \
+						username_set = 0; \
+						pwd_set = 0; \
+					} \
+					/^export OVERRIDE_HOSTNAME_COLOUR=/ { \
+						if (hc != "") { \
+							print "export OVERRIDE_HOSTNAME_COLOUR=${" hc "}"; \
+							hostname_set = 1; \
+						} \
+						next \
+					} \
+					/^export OVERRIDE_USERNAME_COLOUR=/ { \
+						if (uc != "") { \
+							print "export OVERRIDE_USERNAME_COLOUR=${" uc "}"; \
+							username_set = 1; \
+						} \
+						next \
+					} \
+					/^export OVERRIDE_PWD_COLOUR=/ { \
+						if (pc != "") { \
+							print "export OVERRIDE_PWD_COLOUR=${" pc "}"; \
+							pwd_set = 1; \
+						} \
+						next \
+					} \
+					/SCRIPT_SIGNATURE_BLOCK/ { \
+						if (hc != "" && !hostname_set) { \
+							print "export OVERRIDE_HOSTNAME_COLOUR=${" hc "}"; \
+							hostname_set = 1; \
+						} \
+						if (uc != "" && !username_set) { \
+							print "export OVERRIDE_USERNAME_COLOUR=${" uc "}"; \
+							username_set = 1; \
+						} \
+						if (pc != "" && !pwd_set) { \
+							print "export OVERRIDE_PWD_COLOUR=${" pc "}"; \
+							pwd_set = 1; \
+						} \
+						print; \
+						next \
+					} \
+					{ print } \
+					END { \
+						if (hc != "" && !hostname_set) { \
+							print "export OVERRIDE_HOSTNAME_COLOUR=${" hc "}"; \
+						} \
+						if (uc != "" && !username_set) { \
+							print "export OVERRIDE_USERNAME_COLOUR=${" uc "}"; \
+						} \
+						if (pc != "" && !pwd_set) { \
+							print "export OVERRIDE_PWD_COLOUR=${" pc "}"; \
+						} \
+					} \
+				' "$$OVERRIDE_FILE" > "$$TEMP_FILE"; \
+				mv "$$TEMP_FILE" "$$OVERRIDE_FILE"; \
+				chown "$(INSTALL_USER):$$USER_GROUP" "$$OVERRIDE_FILE" 2>/dev/null || chown "$(INSTALL_USER)" "$$OVERRIDE_FILE"; \
 			fi; \
 		fi; \
 		echo "$(GREEN)[cognitify]$(NC) Home files installed to $$HOME_DIR"; \

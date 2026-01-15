@@ -12,17 +12,14 @@ NC='\033[0m' # No Colour
 
 # Distribution to package manager mapping
 declare -A DISTRO_PKG_MANAGER=(
-    ["ubuntu"]="apt-get"
-    ["debian"]="apt-get"
     ["fedora"]="dnf"
     ["centos"]="yum"
     ["rocky"]="dnf"
-    ["rhel"]="yum"
+    ["rhel"]="dnf"
+    ["redhat"]="dnf"
     ["almalinux"]="dnf"
     ["mariner"]="dnf"
     ["azurelinux"]="dnf"
-    ["opensuse"]="zypper"
-    ["sles"]="zypper"
 )
 
 # Package manager to package file mapping
@@ -55,6 +52,10 @@ get_version() {
 # Validate distro
 validate_distro() {
     local distro="$1"
+    # Normalize RHEL variants
+    if [[ "$distro" == "redhat" ]]; then
+        distro="rhel"
+    fi
     if [[ -z "${DISTRO_PKG_MANAGER[$distro]:-}" ]]; then
         error "Unsupported distribution: $distro"
         error "Supported distributions: ${!DISTRO_PKG_MANAGER[*]}"
@@ -66,6 +67,10 @@ validate_distro() {
 # Create package
 create_package() {
     local distro="$1"
+    # Normalize RHEL variants
+    if [[ "$distro" == "redhat" ]]; then
+        distro="rhel"
+    fi
     local version
     version=$(get_version)
     local pkg_manager="${DISTRO_PKG_MANAGER[$distro]}"

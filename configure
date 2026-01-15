@@ -33,12 +33,22 @@ detect_distro() {
         . /etc/os-release
         DISTRO_ID="$ID"
         DISTRO_VERSION_ID="$VERSION_ID"
+        # Normalize RHEL ID variants
+        if [[ "$ID" == "redhat" ]]; then
+            DISTRO_ID="rhel"
+        fi
     elif [[ -f /etc/oracle-release ]]; then
         . /etc/oracle-release
         DISTRO_ID="oracle"
     elif [[ -f /etc/redhat-release ]]; then
-        . /etc/redhat-release
-        DISTRO_ID="rhel"
+        # Fallback for older systems without /etc/os-release
+        # Try to extract version from redhat-release
+        if grep -qi "red hat enterprise" /etc/redhat-release 2>/dev/null; then
+            DISTRO_ID="rhel"
+            DISTRO_VERSION_ID=$(grep -oE '[0-9]+\.[0-9]+' /etc/redhat-release | head -1 || echo "")
+        else
+            DISTRO_ID="rhel"
+        fi
     else
         DISTRO_ID="unknown"
     fi

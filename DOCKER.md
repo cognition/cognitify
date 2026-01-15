@@ -5,39 +5,38 @@ This guide explains how to test Cognitify installations using Docker containers 
 ## Quick Start
 
 ```bash
-# Build and test Ubuntu
-docker build -f Dockerfile.ubuntu -t cognitify-test:ubuntu .
-docker run -it --name cognitify-test-ubuntu cognitify-test:ubuntu
+# Build and test Fedora
+docker build -f Dockerfile.fedora -t cognitify-test:fedora .
+docker run -it --name cognitify-test-fedora cognitify-test:fedora
 
 # Or use the helper script
-./docker-test.sh ubuntu
+./docker-test.sh fedora
 ```
 
 ## Available Distributions
 
-The following Dockerfiles are available:
+The following Dockerfiles are available (yum/dnf-based distributions only):
 
-- **Dockerfile.ubuntu** - Ubuntu (latest)
-- **Dockerfile.debian** - Debian (latest)
 - **Dockerfile.fedora** - Fedora (latest)
 - **Dockerfile.centos** - CentOS (latest)
 - **Dockerfile.rocky** - Rocky Linux (latest)
 - **Dockerfile.almalinux** - AlmaLinux (latest)
 - **Dockerfile.azurelinux** - Azure Linux / CBL-Mariner (latest)
-- **Dockerfile.opensuse** - openSUSE Leap (latest)
+
+**Note:** This pared-down version supports only yum/dnf-based distributions. Dockerfiles for Ubuntu, Debian, and openSUSE have been removed.
 
 ## Manual Build and Test
 
 ### Build an Image
 
 ```bash
-docker build -f Dockerfile.ubuntu -t cognitify-test:ubuntu .
+docker build -f Dockerfile.fedora -t cognitify-test:fedora .
 ```
 
 ### Run a Container
 
 ```bash
-docker run -it --name cognitify-test-ubuntu cognitify-test:ubuntu
+docker run -it --name cognitify-test-fedora cognitify-test:fedora
 ```
 
 This will:
@@ -53,13 +52,13 @@ Type `exit` or press `Ctrl+D` to exit the container.
 ### Remove Container After Testing
 
 ```bash
-docker rm cognitify-test-ubuntu
+docker rm cognitify-test-fedora
 ```
 
 ### Remove Image
 
 ```bash
-docker rmi cognitify-test:ubuntu
+docker rmi cognitify-test:fedora
 ```
 
 ## Using the Helper Script
@@ -75,11 +74,11 @@ The `docker-test.sh` script automates building and testing:
 ### Test Specific Distributions
 
 ```bash
-# Test Ubuntu only
-./docker-test.sh ubuntu
+# Test Fedora only
+./docker-test.sh fedora
 
 # Test multiple distributions
-./docker-test.sh ubuntu debian fedora
+./docker-test.sh fedora centos rocky
 ```
 
 ### Build and Test All Distributions
@@ -172,6 +171,7 @@ Each container:
 - **User**: `cognition` (with sudo privileges)
 - **Working Directory**: `/home/cognition`
 - **Cognitify Installation**: `/etc/bash.bashrc.d/`
+- **Prompt Configuration**: `/etc/prompts/`
 - **User Dotfiles**: `~/.bashrc`, `~/.vimrc`, etc.
 - **Binaries**: `/usr/local/bin/`
 
@@ -188,7 +188,7 @@ chmod +x configure
 
 Check the Dockerfile build logs:
 ```bash
-docker build -f Dockerfile.ubuntu -t cognitify-test:ubuntu . 2>&1 | tail -20
+docker build -f Dockerfile.fedora -t cognitify-test:fedora . 2>&1 | tail -20
 ```
 
 ### Cannot find package manager
@@ -215,10 +215,10 @@ You can use these Dockerfiles in CI/CD pipelines:
 
 ```yaml
 # Example GitHub Actions
-- name: Test Ubuntu
+- name: Test Fedora
   run: |
-    docker build -f Dockerfile.ubuntu -t cognitify-test:ubuntu .
-    docker run --rm cognitify-test:ubuntu bash -c "ddistro && echo 'Test passed'"
+    docker build -f Dockerfile.fedora -t cognitify-test:fedora .
+    docker run --rm cognitify-test:fedora bash -c "ddistro && echo 'Test passed'"
 ```
 
 ## Notes

@@ -31,7 +31,11 @@ detect_docker() {
 }
 
 # Detect distribution
+# Uses the same detection logic as ddistro() in libCognitifyHelpers for consistency
+# This function sets global variables needed for the build system
 detect_distro() {
+    # Source the appropriate OS release file to get distribution information
+    # This matches the logic in ddistro() for consistency
     if [[ -f /etc/os-release ]]; then
         . /etc/os-release
         DISTRO_ID="$ID"
@@ -51,28 +55,43 @@ detect_distro() {
         DOCKER_MODE="yes"
     fi
 
-    # Determine package manager
+    # Determine package manager using command -v (matches improved ddistro() logic)
+    # This ensures we detect what's actually available, not just what should be there
     if command -v apt-get >/dev/null 2>&1; then
         PKG_MANAGER="apt-get"
-        PKG_MANAGER_INSTALL="apt-get install -y"
-        PKG_MANAGER_UPDATE="apt-get update"
     elif command -v dnf >/dev/null 2>&1; then
         PKG_MANAGER="dnf"
-        PKG_MANAGER_INSTALL="dnf install -y"
-        PKG_MANAGER_UPDATE="dnf check-update || true"
     elif command -v yum >/dev/null 2>&1; then
         PKG_MANAGER="yum"
-        PKG_MANAGER_INSTALL="yum install -y"
-        PKG_MANAGER_UPDATE="yum check-update || true"
     elif command -v zypper >/dev/null 2>&1; then
         PKG_MANAGER="zypper"
-        PKG_MANAGER_INSTALL="zypper --non-interactive install --auto-agree-with-licenses"
-        PKG_MANAGER_UPDATE="zypper refresh"
     else
         PKG_MANAGER="unknown"
-        PKG_MANAGER_INSTALL=""
-        PKG_MANAGER_UPDATE=""
     fi
+
+    # Set install and update commands based on detected package manager
+    case "$PKG_MANAGER" in
+        apt-get)
+            PKG_MANAGER_INSTALL="apt-get install -y"
+            PKG_MANAGER_UPDATE="apt-get update"
+            ;;
+        dnf)
+            PKG_MANAGER_INSTALL="dnf install -y"
+            PKG_MANAGER_UPDATE="dnf check-update || true"
+            ;;
+        yum)
+            PKG_MANAGER_INSTALL="yum install -y"
+            PKG_MANAGER_UPDATE="yum check-update || true"
+            ;;
+        zypper)
+            PKG_MANAGER_INSTALL="zypper --non-interactive install --auto-agree-with-licenses"
+            PKG_MANAGER_UPDATE="zypper refresh"
+            ;;
+        *)
+            PKG_MANAGER_INSTALL=""
+            PKG_MANAGER_UPDATE=""
+            ;;
+    esac
 }
 
 # Parse command line arguments

@@ -97,28 +97,45 @@ EOF
     fi
     
     # Determine the family and package manager based on distro ID
+    # Use command -v to detect actual package manager availability (more accurate than hardcoding)
     case "${normalized_id}" in 
         *debian* | *ubuntu* | *mint* )
             distro_family="debian"
-            package_manager="apt-get"
+            # Check for actual package manager availability
+            if command -v apt-get >/dev/null 2>&1; then
+                package_manager="apt-get"
+            else
+                package_manager="unknown"
+            fi
                 ;;
         *rhel* | *centos* | *ol* | *oracle* | *rocky* | *amzn* | *almalinux* | *mariner* )
             distro_family="rhel"
             # Prefer dnf if available, fallback to yum
             if command -v dnf >/dev/null 2>&1; then
                 package_manager="dnf"
-            else
+            elif command -v yum >/dev/null 2>&1; then
                 package_manager="yum"
+            else
+                package_manager="unknown"
             fi
                 ;;
         *fedora* )
             distro_family="fedora"
-            # Fedora uses dnf
-            package_manager="dnf"
+            # Check for actual package manager availability
+            if command -v dnf >/dev/null 2>&1; then
+                package_manager="dnf"
+            else
+                package_manager="unknown"
+            fi
                 ;;
         *suse* )
             distro_family="suse"
-            package_manager="zypper"
+            # Check for actual package manager availability
+            if command -v zypper >/dev/null 2>&1; then
+                package_manager="zypper"
+            else
+                package_manager="unknown"
+            fi
                 ;;
         *)
             echo "Error: unsupported distro ${ID} ${VERSION_ID}" >&2

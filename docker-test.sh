@@ -4,12 +4,26 @@
 
 set -e
 
-# Colours
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[0;33m'
-BLUE='\033[0;34m'
-NC='\033[0m' # No Colour
+# Source common logging functions
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [[ -f "$SCRIPT_DIR/bin/lib/common-logging.sh" ]]; then
+    LOG_PREFIX="docker-test"
+    source "$SCRIPT_DIR/bin/lib/common-logging.sh"
+elif [[ -f "$SCRIPT_DIR/../bin/lib/common-logging.sh" ]]; then
+    LOG_PREFIX="docker-test"
+    source "$SCRIPT_DIR/../bin/lib/common-logging.sh"
+else
+    # Fallback if logging library not found
+    RED='\033[0;31m'
+    GREEN='\033[0;32m'
+    YELLOW='\033[0;33m'
+    BLUE='\033[0;34m'
+    NC='\033[0m'
+    log() { printf "${GREEN}[docker-test]${NC} %s\n" "$*"; }
+    error() { printf "${RED}[docker-test] ERROR:${NC} %s\n" "$*" >&2; }
+    warn() { printf "${YELLOW}[docker-test] WARNING:${NC} %s\n" "$*" >&2; }
+    info() { printf "${BLUE}[docker-test] INFO:${NC} %s\n" "$*"; }
+fi
 
 # Available distributions
 DISTROS=("ubuntu" "debian" "fedora" "centos" "rocky" "almalinux" "azurelinux" "opensuse")
@@ -37,22 +51,6 @@ Examples:
   $0 --build-only             # Build all images
   $0 --run-only ubuntu         # Run Ubuntu container (assumes image exists)
 EOF
-}
-
-log() {
-    printf "${GREEN}[docker-test]${NC} %s\n" "$*"
-}
-
-error() {
-    printf "${RED}[docker-test] ERROR:${NC} %s\n" "$*" >&2
-}
-
-warn() {
-    printf "${YELLOW}[docker-test] WARNING:${NC} %s\n" "$*" >&2
-}
-
-info() {
-    printf "${BLUE}[docker-test] INFO:${NC} %s\n" "$*"
 }
 
 build_image() {

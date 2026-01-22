@@ -4,11 +4,24 @@
 
 set -e
 
-# Colours
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[0;33m'
-NC='\033[0m' # No Colour
+# Source common logging functions
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [[ -f "$SCRIPT_DIR/bin/lib/common-logging.sh" ]]; then
+    LOG_PREFIX="package"
+    source "$SCRIPT_DIR/bin/lib/common-logging.sh"
+elif [[ -f "$SCRIPT_DIR/../bin/lib/common-logging.sh" ]]; then
+    LOG_PREFIX="package"
+    source "$SCRIPT_DIR/../bin/lib/common-logging.sh"
+else
+    # Fallback if logging library not found
+    RED='\033[0;31m'
+    GREEN='\033[0;32m'
+    YELLOW='\033[0;33m'
+    NC='\033[0m'
+    log() { printf "${GREEN}[package]${NC} %s\n" "$*"; }
+    error() { printf "${RED}[package] ERROR:${NC} %s\n" "$*" >&2; }
+    warn() { printf "${YELLOW}[package] WARNING:${NC} %s\n" "$*" >&2; }
+fi
 
 # Distribution to package manager mapping
 declare -A DISTRO_PKG_MANAGER=(
@@ -32,18 +45,6 @@ declare -A PKG_MANAGER_FILE=(
     ["dnf"]="PACKAGES_YUM"
     ["zypper"]="PACKAGES_ZYPPER"
 )
-
-log() {
-    printf "${GREEN}[package]${NC} %s\n" "$*"
-}
-
-error() {
-    printf "${RED}[package] ERROR:${NC} %s\n" "$*" >&2
-}
-
-warn() {
-    printf "${YELLOW}[package] WARNING:${NC} %s\n" "$*" >&2
-}
 
 # Get version from version file
 get_version() {

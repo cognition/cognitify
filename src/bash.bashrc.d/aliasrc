@@ -135,7 +135,6 @@ alias rvmc='rvm current'
 if [[ -x /usr/bin/netstat ]]; then 
     # TCP Connections
     alias established='netstat -napt | grep ESTABLISHED'
-    # TCP Connections
     alias established-l='netstat -napt | grep ESTABLISHED'
 
     # Listening TCP

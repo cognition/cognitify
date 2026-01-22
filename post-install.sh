@@ -5,11 +5,24 @@
 
 set -euo pipefail
 
-# Colours
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[0;33m'
-NC='\033[0m' # No Colour
+# Source common logging functions
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [[ -f "$SCRIPT_DIR/bin/lib/common-logging.sh" ]]; then
+    LOG_PREFIX="cognitify"
+    source "$SCRIPT_DIR/bin/lib/common-logging.sh"
+elif [[ -f "$SCRIPT_DIR/../bin/lib/common-logging.sh" ]]; then
+    LOG_PREFIX="cognitify"
+    source "$SCRIPT_DIR/../bin/lib/common-logging.sh"
+else
+    # Fallback if logging library not found
+    RED='\033[0;31m'
+    GREEN='\033[0;32m'
+    YELLOW='\033[0;33m'
+    NC='\033[0m'
+    log() { printf "${GREEN}[cognitify]${NC} %s\n" "$*" >&2; }
+    error() { printf "${RED}[cognitify] ERROR:${NC} %s\n" "$*" >&2; }
+    warn() { printf "${YELLOW}[cognitify] WARNING:${NC} %s\n" "$*" >&2; }
+fi
 
 # Arguments
 PKG_MANAGER="${1:-}"
@@ -18,18 +31,6 @@ PKG_MANAGER_UPDATE="${3:-}"
 PACKAGES_DIR="${4:-src/packages}"
 INCLUDE_GUI="${5:-no}"
 DOCKER_MODE="${6:-no}"
-
-log() {
-    printf "${GREEN}[cognitify]${NC} %s\n" "$*" >&2
-}
-
-error() {
-    printf "${RED}[cognitify] ERROR:${NC} %s\n" "$*" >&2
-}
-
-warn() {
-    printf "${YELLOW}[cognitify] WARNING:${NC} %s\n" "$*" >&2
-}
 
 # Check if running as root
 if [[ $EUID -ne 0 ]]; then

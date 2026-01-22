@@ -13,7 +13,7 @@ fi
 PROMPTS_BASE_PATH="/etc/prompts"
 if [[ -f "${PROMPTS_BASE_PATH}/lib/cognitifyColours" ]]; then
     source "${PROMPTS_BASE_PATH}/lib/cognitifyColours"
-elif [[ -f "${BASE_PATH}/lib/cognitifyColours" ]]; then
+elif [[ -n "${BASE_PATH}" ]] && [[ -f "${BASE_PATH}/lib/cognitifyColours" ]]; then
     source "${BASE_PATH}/lib/cognitifyColours"
 fi
 
@@ -28,9 +28,9 @@ force_color_prompt=yes
 # Check if color prompts are enabled, tput command is available, and supports color changes
 if [ -n "$force_color_prompt" ] && [ -x /usr/bin/tput ] && tput setaf 1 >&/dev/null; then
     export color_prompt=yes  # Enable color prompts
-    else
+else
     export color_prompt=     # Disable color prompts
-    fi
+fi
 
 # Define color codes for terminal prompt elements
 HOSTNAME_TWO='[38;5;29m\]'  # Alternate color code for hostname

@@ -27,4 +27,6 @@ config.mk
 *.tar.gz 
 
 
+*_REPORT.md
+
 

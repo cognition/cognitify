@@ -19,6 +19,15 @@ GROUP_NAME="cognitify"
 TARGET_USER="${SUDO_USER:-${USER}}"
 SKIP_PACKAGES=false
 
+# Source common logging functions
+if [[ -f "$ROOT_DIR/bin/lib/common-logging.sh" ]]; then
+    source "$ROOT_DIR/bin/lib/common-logging.sh"
+else
+    # Fallback if logging library not found
+    log() { printf "[cognitify] %s\n" "$*"; }
+    error() { printf "[cognitify] ERROR: %s\n" "$*" >&2; }
+fi
+
 usage() {
     cat <<USAGE
 Usage: sudo bin/install.sh [options]
@@ -29,9 +38,6 @@ Options:
   -h, --help           Show this help message.
 USAGE
 }
-
-log() { printf "[cognitify] %s\n" "$*"; }
-error() { printf "[cognitify] ERROR: %s\n" "$*" >&2; }
 
 require_root() {
     if [[ $EUID -ne 0 ]]; then

@@ -118,7 +118,7 @@ elif [[ -x /usr/bin/netstat ]]; then
     # Fallback to netstat if ss is not available
     # TCP Connections
     alias established='netstat -napt | grep ESTABLISHED'
-    alias established-l='netstat -napt | grep ESTABLISHED'
+    alias established-l='netstat -napt | grep ESTABLISHED | grep 127.0.0.1'
 
     # Listening TCP
     alias listening='netstat -napt | grep LISTEN'

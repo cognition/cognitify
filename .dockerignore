@@ -1,0 +1,44 @@
+# Git files
+.git
+.gitignore
+.gitattributes
+
+# Documentation (not needed in container)
+*.md
+!README.md
+
+# Ansible files (not needed for Docker)
+*.yml
+ansible-inventory.example
+ANSIBLE.md
+
+# IDE files
+*.code-workspace
+*.kate*
+
+# Swap files
+*~
+~*
+*swp
+
+# Backup files
+*.orig
+
+# Test directories
+test/
+secrets/
+log/
+scratch/
+ref/
+private/
+
+# Build artifacts
+config.mk
+*.tar.gz
+
+# Report files
+*_REPORT.md
+
+# Docker files (don't copy into itself)
+Dockerfile
+.dockerignore

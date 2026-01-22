@@ -95,6 +95,12 @@ export OVERRIDE_PWD_COLOUR=${AZURE}
 
 See `src/home-files/over-ride` for all available colour variables.
 
+## Sample Prompt
+
+![Fancy Prompt Example](fancy-prompt-example.png)
+
+Use this screenshot as a quick preview of how the Cognitify Fancy Prompt appears once installed.
+
 ## Version
 
 Current version: `0.2.0-fancy-prompt`

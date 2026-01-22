@@ -1,0 +1,8 @@
+## (c) 2026
+## Ramon Brooker
+## rbrooker@aeo3.io
+
+# Source the system-wide bash configuration for prompts and aliases
+if [[ -f /etc/bash.bashrc.d/bashrc_file ]]; then
+    source /etc/bash.bashrc.d/bashrc_file
+fi

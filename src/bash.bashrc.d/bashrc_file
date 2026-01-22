@@ -10,28 +10,23 @@ esac
 
 set bell-style none
 
-########## Bring in other scripts  #########
-set bell-style none
+# Shell options
 shopt -s cmdhist
 shopt -s checkwinsize
 shopt -s globstar
 
 BASE_PATH="/etc/bash.bashrc.d"
 
-## Source dependencies for prompts and aliases
-if [[  -f ${BASE_PATH}/environmentrc ]] ; then
-   source ${BASE_PATH}/environmentrc
-fi
-
-if [[  -f ${BASE_PATH}/promptrc ]] ; then
+# Source prompt and alias configurations
+if [[ -f ${BASE_PATH}/promptrc ]]; then
    source ${BASE_PATH}/promptrc
 fi
 
-if [[  -f ${BASE_PATH}/aliasrc ]] ; then
+if [[ -f ${BASE_PATH}/aliasrc ]]; then
    source ${BASE_PATH}/aliasrc
 fi
 
-## Local Over ride file to over ride anything from standard
-if [[  -f "${HOME}"/.over-ride ]] ; then
-   source "${HOME}"/.over-ride
+# User-specific override file (for prompt and alias customizations)
+if [[ -f "${HOME}/.over-ride" ]]; then
+   source "${HOME}/.over-ride"
 fi

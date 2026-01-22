@@ -22,9 +22,6 @@ if [[ -f "${PROMPTS_BASE_PATH}/config" ]]; then
     source "${PROMPTS_BASE_PATH}/config"
 fi
 
-# If user-specific override file exists, source it to apply user preferences
-[[ -f "${HOME}/.over-ride" ]] && source "${HOME}/.over-ride"
-
 # Setting a flag to enforce color prompt
 force_color_prompt=yes
 
@@ -55,6 +52,9 @@ fi
 # Assign colors for present working directory, with possible overrides
 PWD_COLOUR="${OVERRIDE_PWD_COLOUR:-$LT_BLUE}"
 
+# SUDO_USER color (displayed when using sudo -u to switch users)
+SUDO_USER_COLOUR="${OVERRIDE_SUDO_USER_COLOUR:-$ORANGE}"
+
 # Define bracket styles for prompt elements
 OPEN_BRACKET="${PS_SQUARE_BRACKETS}[${RESET}"
 CLOSE_BRACKET="${RESET}${PS_SQUARE_BRACKETS}]${RESET}"
@@ -62,6 +62,14 @@ CLOSE_BRACKET="${RESET}${PS_SQUARE_BRACKETS}]${RESET}"
 # Compile colored hostname and working directory strings
 HOSTNAME_GRP="${COLOUR}${HOSTNAME_COLOUR}\h${RESET}"  # Hostname with color
 PS_PWD="${COLOUR}${PWD_COLOUR}:\w ${RESET}"  # Working directory with color
+
+# SUDO_USER display (only shown when SUDO_USER is set and different from current user)
+if [[ -n "${SUDO_USER}" ]] && [[ "${SUDO_USER}" != "${USER}" ]]; then
+    SUDO_USER_GRP="${COLOUR}${SUDO_USER_COLOUR}${SUDO_USER}${RESET}"  # SUDO_USER with color
+    SUDO_USER_DISPLAY="${OPEN_BRACKET}${SUDO_USER_GRP}${CLOSE_BRACKET} "  # Formatted SUDO_USER display
+else
+    SUDO_USER_DISPLAY=""  # Empty if not using sudo -u
+fi
 
 # Format different parts of the user and root prompts
 USER_HOSTNAME="${OPEN_BRACKET}${HOSTNAME_GRP}${CLOSE_BRACKET} "  # User hostname
@@ -76,13 +84,13 @@ ROOT_FULL_MESSAGE="${ROOT_MESSAGE}${USER_HOSTNAME}"  # Combining root warning wi
 
 # Conditional root prompt message
 if [[ -f ${HOME}/.no_root_message ]]; then
-    ROOT_PS1="${USER_HOSTNAME}${ROOT_USER}${PS_PWD}${ROOT_PROMPT}"  # Simple root prompt without message
+    ROOT_PS1="${SUDO_USER_DISPLAY}${USER_HOSTNAME}${ROOT_USER}${PS_PWD}${ROOT_PROMPT}"  # Simple root prompt without message
 else
-    ROOT_PS1="${ROOT_FULL_MESSAGE}${ROOT_USER}${PS_PWD}${ROOT_PROMPT}"  # Root prompt with warning message
+    ROOT_PS1="${SUDO_USER_DISPLAY}${ROOT_FULL_MESSAGE}${ROOT_USER}${PS_PWD}${ROOT_PROMPT}"  # Root prompt with warning message
 fi
 
 # Compile full user prompt
-USER_PS1="${USER_HOSTNAME}${USER_USER}${PS_PWD}${USER_PROMPT}"
+USER_PS1="${SUDO_USER_DISPLAY}${USER_HOSTNAME}${USER_USER}${PS_PWD}${USER_PROMPT}"
 
 ## Prompt Definitions
 

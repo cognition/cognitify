@@ -12,9 +12,8 @@ alias alert='notify-send --urgency=low -i "$([ $? = 0 ] && echo terminal || echo
 # Check if the current script is executed by the root user
 if [ $UID = 0 ]; then
     # Print a warning advising against setting a password for the root account
-    alias passwd='printf "\n ${RED}${BOLD}Never${NC} create a password for ${RED}ROOT \n\n" '
+    alias passwd='printf "\n\033[1;31mNever\033[0m create a password for \033[1;31mROOT\033[0m\n\n"'
 fi
-
 
 # Aliases that ALTER standard commands
 
@@ -48,9 +47,7 @@ fi
 alias df='df -HT'
 alias dusd='du -sh'
 
-
-
-alias rebash='source ${HOME}/.bashrc '
+alias rebash='source ${HOME}/.bashrc'
 
 ## Navigation and Laziness
 alias ..='cd ../'
@@ -58,18 +55,16 @@ alias x='exit'
 
 alias histawk='history | awk '
 
-## Cause I usually can't remember
+# Common command shortcuts
 alias clean='clear'
 alias gtar='tar -cvzf '
-
 
 # Rsync alias for directory synchronization with common options
 alias rsync-dir='rsync -a --human-readable --progress --compress '
 
-## Tools for system management and process searching
+# Tools for system management and process searching
 alias psgrep='ps aux | grep -v grep | grep '
 alias srvs='service --status-all'
-
 
 # Define networking aliases with preference for ss over netstat
 # ss is preferred as it's more modern and faster than netstat
@@ -112,7 +107,6 @@ if [[ -x /usr/bin/docker ]]; then
     alias dpull='docker pull '
     alias dsearch='docker search '
 fi
-
 
 # Git version control aliases for efficiency
 if [[ -x /usr/bin/git ]]; then

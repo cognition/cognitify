@@ -4,9 +4,6 @@
 # Prevent shellcheck warnings for sourcing potentially non-existent files
 # shellcheck source=/dev/null
 
-## Get the package manager used by the current Linux distribution
-PACKAGE_MANAGER=$(ddistro 3)
-
 ## Define Aliases
 
 # This alias sends a notification to the user after a command completes, indicating its success or failure
@@ -51,19 +48,8 @@ fi
 alias df='df -HT'
 alias dusd='du -sh'
 
-# Set Neovim as the default editor if it is installed
-if [[ -x /usr/bin/nvim ]]; then
-    alias vi='nvim'
-    alias vim='nvim'
-    alias v='nvim'
-    alias snv='sudo nvim'
 
-    ## Cause I'm Funny
-    alias nano="echo 'don\'t you mean nvim'"
-    alias emacs='nvim'
-fi 
 
-alias local-user-change='nvim ${HOME}/.over-ride; source ${HOME}/.bashrc'
 alias rebash='source ${HOME}/.bashrc '
 
 ## Navigation and Laziness
@@ -80,41 +66,10 @@ alias gtar='tar -cvzf '
 # Rsync alias for directory synchronization with common options
 alias rsync-dir='rsync -a --human-readable --progress --compress '
 
-# Alias for launching a new root shell for non-root users
-if [[ ${UID} -gt 999 ]]; then
-    alias su='sudo su '
-fi
-
-# Load additional aliases based on detected package manager
-case "${PACKAGE_MANAGER}" in
-    apt | apt-get ) 
-        source ${BASE_PATH}/lib/alias-debian
-        ;;
-    yum | dnf | rpm ) 
-        source ${BASE_PATH}/lib/alias-yum
-        ;;
-    zypper ) 
-        source ${BASE_PATH}/lib/alias-suse
-        ;;
-esac 
-
-# Restricted shell alias protection against typos
-alias restricted-bash='rbash' 
-alias rbash='echo "try restricted-bash"'
-
-## Navigation Laziness
-alias opt='cd /opt'
-alias dl='cd ~/Downloads'
-alias doc='cd ~/Documents'
-alias bsh='cd ${BASE_PATH}/'
-
 ## Tools for system management and process searching
 alias psgrep='ps aux | grep -v grep | grep '
 alias srvs='service --status-all'
 
-## Ruby development utility aliases
-alias gemi='gem install '
-alias rvmc='rvm current'
 
 # Define networking aliases with preference for ss over netstat
 # ss is preferred as it's more modern and faster than netstat
@@ -158,42 +113,6 @@ if [[ -x /usr/bin/docker ]]; then
     alias dsearch='docker search '
 fi
 
-# Podman-related aliases
-if [[  -x /usr/bin/podman ]]; then
-    alias p='podman '
-    alias ppsa='podman ps -a'
-    alias prunit='podman run -dit '
-fi
-
-# Kubernetes management utility via kubectl
-if [[ -x /usr/bin/kubectl ]]; then
-    alias k8s='kubectl '
-    complete -o default -F __start_kubectl k8s
-fi
-
-# Minikube management aliases
-if [[  -x /usr/bin/minikube ]] || [[ -x /usr/local/bin/minikube ]] ; then
-    alias k='minikube kubectl '
-    alias m='minikube '
-    complete -F __start_minikube k
-    complete -F __start_minikube m
-fi
-
-# Check for Terraform and define aliases if installed
-TF=$(which terraform 2>/dev/null)
-if [[ -n "$TF" ]] && [[ "$TF" != "terraform not found" ]]; then
-    alias tf='terraform '
-    alias tfplan='terraform plan '
-    complete -C "$TF" terraform
-fi
-
-# Vagrant management aliases
-if command -v vagrant >/dev/null 2>&1; then
-    alias vup='vagrant up'
-    alias vdown='vagrant halt'
-    alias vup-again='vagrant resume'
-    alias vres='vagrant resume'
-fi
 
 # Git version control aliases for efficiency
 if [[ -x /usr/bin/git ]]; then

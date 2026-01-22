@@ -2,34 +2,3 @@
 ## Ramon Brooker <rbrooker@aeo3.io>
 
 # shellcheck source=/dev/null
-
-##########################         VARIABLES          ########################
-
-## History Settings
-shopt -s histappend
-export PROMPT_COMMAND='history -a'
-export HISTIGNORE="x:exit:clean:su:pwd:clear:ls:ll: "
-export HISTSIZE=10000
-export HISTFILESIZE=20000
-export HISTCONTROL=ignoreboth:erasedups
-export HISTTIMEFORMAT="%Y %h %d %H:%M:%S  "
-
-export LIBGL_ALWAYS_INDIRECT=1
-
-## for alias auto complete 
-## https://github.com/cykerway/complete-alias
-export COMPAL_AUTO_UNMASK=1
-
-
-
-##########################         EXPORTS          ########################
-
-HOME_BINS="${HOME}/.bin:${HOME}/.local/bin"
-
-if [[ ${UID} -gt 999 ]]; then
-    PATH="${HOME_BINS}"
-    export PATH=${PATH}:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/opt/bin
-else
-    # Root or System User
-    export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
-fi

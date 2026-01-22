@@ -51,6 +51,19 @@ fi
 alias df='df -HT'
 alias dusd='du -sh'
 
+# Set Neovim as the default editor if it is installed
+if [[ -x /usr/bin/nvim ]]; then
+    alias vi='nvim'
+    alias vim='nvim'
+    alias v='nvim'
+    alias snv='sudo nvim'
+
+    ## Cause I'm Funny
+    alias nano="echo 'don\'t you mean nvim'"
+    alias emacs='nvim'
+fi 
+
+alias local-user-change='nvim ${HOME}/.over-ride; source ${HOME}/.bashrc'
 alias rebash='source ${HOME}/.bashrc '
 
 ## Navigation and Laziness
@@ -99,6 +112,10 @@ alias bsh='cd ${BASE_PATH}/'
 alias psgrep='ps aux | grep -v grep | grep '
 alias srvs='service --status-all'
 
+## Ruby development utility aliases
+alias gemi='gem install '
+alias rvmc='rvm current'
+
 # Define networking aliases with preference for ss over netstat
 # ss is preferred as it's more modern and faster than netstat
 if [[ -x /usr/bin/ss ]]; then 
@@ -146,6 +163,36 @@ if [[  -x /usr/bin/podman ]]; then
     alias p='podman '
     alias ppsa='podman ps -a'
     alias prunit='podman run -dit '
+fi
+
+# Kubernetes management utility via kubectl
+if [[ -x /usr/bin/kubectl ]]; then
+    alias k8s='kubectl '
+    complete -o default -F __start_kubectl k8s
+fi
+
+# Minikube management aliases
+if [[  -x /usr/bin/minikube ]] || [[ -x /usr/local/bin/minikube ]] ; then
+    alias k='minikube kubectl '
+    alias m='minikube '
+    complete -F __start_minikube k
+    complete -F __start_minikube m
+fi
+
+# Check for Terraform and define aliases if installed
+TF=$(which terraform 2>/dev/null)
+if [[ -n "$TF" ]] && [[ "$TF" != "terraform not found" ]]; then
+    alias tf='terraform '
+    alias tfplan='terraform plan '
+    complete -C "$TF" terraform
+fi
+
+# Vagrant management aliases
+if command -v vagrant >/dev/null 2>&1; then
+    alias vup='vagrant up'
+    alias vdown='vagrant halt'
+    alias vup-again='vagrant resume'
+    alias vres='vagrant resume'
 fi
 
 # Git version control aliases for efficiency

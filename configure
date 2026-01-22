@@ -402,21 +402,20 @@ EOF
     echo "  Installation Prefix: ${PREFIX}"
     echo "  Configuration Directory: ${ETC_DIR}"
     echo "  Install User: ${INSTALL_USER}"
-<<<<<<< HEAD
-  echo "  Include GUI: ${INCLUDE_GUI}"
-  echo "  Skip Packages: ${SKIP_PACKAGES}"
-  echo "  Docker Mode: ${DOCKER_MODE}"
-  echo "  Extended Completions: ${EXTENDED_COMPLETIONS}"
-  echo "  Extended Home Files: ${EXTENDED_HOME_FILES}"
-  if [[ -n "${HOSTNAME_COLOUR}" ]]; then
-      echo "  Hostname Colour: ${HOSTNAME_COLOUR}"
-  fi
-  if [[ -n "${USERNAME_COLOUR}" ]]; then
-      echo "  Username Colour: ${USERNAME_COLOUR}"
-  fi
-  if [[ -n "${PWD_COLOUR}" ]]; then
-      echo "  PWD Colour: ${PWD_COLOUR}"
-  fi
+    echo "  Include GUI: ${INCLUDE_GUI}"
+    echo "  Skip Packages: ${SKIP_PACKAGES}"
+    echo "  Docker Mode: ${DOCKER_MODE}"
+    echo "  Extended Completions: ${EXTENDED_COMPLETIONS}"
+    echo "  Extended Home Files: ${EXTENDED_HOME_FILES}"
+    if [[ -n "${HOSTNAME_COLOUR}" ]]; then
+        echo "  Hostname Colour: ${HOSTNAME_COLOUR}"
+    fi
+    if [[ -n "${USERNAME_COLOUR}" ]]; then
+        echo "  Username Colour: ${USERNAME_COLOUR}"
+    fi
+    if [[ -n "${PWD_COLOUR}" ]]; then
+        echo "  PWD Colour: ${PWD_COLOUR}"
+    fi
     echo ""
     echo "Next steps:"
     echo "  make          - Build the project"

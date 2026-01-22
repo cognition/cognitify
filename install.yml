@@ -1,0 +1,203 @@
+---
+## (c) 2026
+## Ramon Brooker <rbrooker@aeo3.io>
+## Cognitify Fancy Prompt Ansible Playbook
+
+- name: Install Cognitify Fancy Prompt
+  hosts: all
+  become: yes
+  vars:
+    cognitify_user: "{{ ansible_user }}"
+    cognitify_skip_user_files: false
+    cognitify_all_users: false
+    cognitify_update_skel: false
+  
+  tasks:
+    - name: Create system directories
+      file:
+        path: "{{ item }}"
+        state: directory
+        mode: '0755'
+      loop:
+        - /etc/bash.bashrc.d/lib
+        - /etc/prompts/lib
+
+    - name: Install system-wide bash configuration files
+      copy:
+        src: "{{ item.src }}"
+        dest: "{{ item.dest }}"
+        mode: '0644'
+        owner: root
+        group: root
+      loop:
+        - { src: 'src/bash.bashrc.d/bashrc_file', dest: '/etc/bash.bashrc.d/bashrc_file' }
+        - { src: 'src/bash.bashrc.d/promptrc', dest: '/etc/bash.bashrc.d/promptrc' }
+        - { src: 'src/bash.bashrc.d/aliasrc', dest: '/etc/bash.bashrc.d/aliasrc' }
+        - { src: 'src/bash.bashrc.d/lib/cognitifyColours', dest: '/etc/bash.bashrc.d/lib/cognitifyColours' }
+        - { src: 'src/bash.bashrc.d/cognitify-me.sh', dest: '/etc/bash.bashrc.d/cognitify-me.sh', mode: '0755' }
+        - { src: 'src/bash.bashrc.d/lib/cognitifyColours', dest: '/etc/prompts/lib/cognitifyColours' }
+
+    - name: Update skeleton directory
+      block:
+        - name: Create skeleton directory
+          file:
+            path: /etc/skel
+            state: directory
+            mode: '0755'
+
+        - name: Backup existing skeleton .bashrc
+          copy:
+            src: /etc/skel/.bashrc
+            dest: /etc/skel/.bashrc.orig
+            remote_src: yes
+          when: stat(path='/etc/skel/.bashrc', follow=true).stat.exists
+
+        - name: Backup existing skeleton .profile
+          copy:
+            src: /etc/skel/.profile
+            dest: /etc/skel/.profile.orig
+            remote_src: yes
+          when: stat(path='/etc/skel/.profile', follow=true).stat.exists
+
+        - name: Install skeleton dotfiles
+          copy:
+            src: "{{ item.src }}"
+            dest: "/etc/skel/{{ item.dest }}"
+            mode: '0644'
+            owner: root
+            group: root
+          loop:
+            - { src: 'src/home-files/bashrc', dest: '.bashrc' }
+            - { src: 'src/home-files/profile', dest: '.profile' }
+            - { src: 'src/home-files/over-ride', dest: '.over-ride' }
+
+      when: cognitify_update_skel | bool
+
+    - name: Get user home directory
+      shell: "getent passwd {{ cognitify_user }} | cut -d: -f6"
+      register: user_home_result
+      changed_when: false
+      when: not cognitify_skip_user_files
+
+    - name: Set user home directory
+      set_fact:
+        user_home: "{{ user_home_result.stdout }}"
+      when: not cognitify_skip_user_files
+
+    - name: Backup existing .bashrc
+      copy:
+        src: "{{ user_home }}/.bashrc"
+        dest: "{{ user_home }}/.bashrc.orig"
+        remote_src: yes
+      when:
+        - not cognitify_skip_user_files
+        - stat(path=user_home + '/.bashrc', follow=true).stat.exists
+        - not stat(path=user_home + '/.bashrc.orig', follow=true).stat.exists
+
+    - name: Backup existing .profile
+      copy:
+        src: "{{ user_home }}/.profile"
+        dest: "{{ user_home }}/.profile.orig"
+        remote_src: yes
+      when:
+        - not cognitify_skip_user_files
+        - stat(path=user_home + '/.profile', follow=true).stat.exists
+        - not stat(path=user_home + '/.profile.orig', follow=true).stat.exists
+
+    - name: Install user dotfiles
+      copy:
+        src: "{{ item.src }}"
+        dest: "{{ user_home }}/{{ item.dest }}"
+        mode: '0644'
+        owner: "{{ cognitify_user }}"
+        group: "{{ cognitify_user }}"
+      loop:
+        - { src: 'src/home-files/bashrc', dest: '.bashrc' }
+        - { src: 'src/home-files/profile', dest: '.profile' }
+      when: not cognitify_skip_user_files
+
+    - name: Install user override template
+      copy:
+        src: src/home-files/over-ride
+        dest: "{{ user_home }}/.over-ride"
+        mode: '0644'
+        owner: "{{ cognitify_user }}"
+        group: "{{ cognitify_user }}"
+      when:
+        - not cognitify_skip_user_files
+        - not cognitify_all_users | bool
+        - not stat(path=user_home + '/.over-ride', follow=true).stat.exists
+
+    - name: Install dotfiles for all users
+      block:
+        - name: Get all users
+          shell: "getent passwd | awk -F: '$3 >= 1000 || $1 == \"root\" {print $1\":\"$6}'"
+          register: all_users_result
+          changed_when: false
+
+        - name: Install dotfiles for each user
+          block:
+            - name: Parse username and home
+              set_fact:
+                current_user: "{{ item.split(':')[0] }}"
+                current_home: "{{ item.split(':')[1] }}"
+
+            - name: Check if home directory exists
+              stat:
+                path: "{{ current_home }}"
+              register: home_stat
+
+            - name: Backup existing .bashrc for user
+              copy:
+                src: "{{ current_home }}/.bashrc"
+                dest: "{{ current_home }}/.bashrc.orig"
+                remote_src: yes
+              when:
+                - home_stat.stat.exists
+                - home_stat.stat.isdir
+                - stat(path=current_home + '/.bashrc', follow=true).stat.exists
+                - not stat(path=current_home + '/.bashrc.orig', follow=true).stat.exists
+
+            - name: Backup existing .profile for user
+              copy:
+                src: "{{ current_home }}/.profile"
+                dest: "{{ current_home }}/.profile.orig"
+                remote_src: yes
+              when:
+                - home_stat.stat.exists
+                - home_stat.stat.isdir
+                - stat(path=current_home + '/.profile', follow=true).stat.exists
+                - not stat(path=current_home + '/.profile.orig', follow=true).stat.exists
+
+            - name: Install user dotfiles
+              copy:
+                src: "{{ item.src }}"
+                dest: "{{ current_home }}/{{ item.dest }}"
+                mode: '0644'
+                owner: "{{ current_user }}"
+                group: "{{ current_user }}"
+              loop:
+                - { src: 'src/home-files/bashrc', dest: '.bashrc' }
+                - { src: 'src/home-files/profile', dest: '.profile' }
+              when:
+                - home_stat.stat.exists
+                - home_stat.stat.isdir
+
+            - name: Install user override template
+              copy:
+                src: src/home-files/over-ride
+                dest: "{{ current_home }}/.over-ride"
+                mode: '0644'
+                owner: "{{ current_user }}"
+                group: "{{ current_user }}"
+              when:
+                - home_stat.stat.exists
+                - home_stat.stat.isdir
+                - not stat(path=current_home + '/.over-ride', follow=true).stat.exists
+
+          loop: "{{ all_users_result.stdout_lines }}"
+          when: item is defined and item != ""
+
+      when:
+        - not cognitify_skip_user_files | bool
+        - cognitify_all_users | bool

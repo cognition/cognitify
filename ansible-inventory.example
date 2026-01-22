@@ -1,0 +1,23 @@
+## (c) 2026
+## Ramon Brooker <rbrooker@aeo3.io>
+## Example Ansible Inventory for Cognitify Fancy Prompt
+
+[servers]
+server1.example.com
+server2.example.com
+
+[servers:vars]
+ansible_user=admin
+cognitify_user=admin
+
+[workstations]
+workstation1.example.com
+workstation2.example.com
+
+[workstations:vars]
+ansible_user=user
+cognitify_user=user
+
+[all:vars]
+# Skip user files installation (system-wide only)
+# cognitify_skip_user_files=true

@@ -17,6 +17,10 @@ shopt -s globstar
 
 BASE_PATH="/etc/bash.bashrc.d"
 
+# Set version information
+COGNITIFY_VERSION="0.2.0-fancy-prompt"
+export COGNITIFY_VERSION
+
 # Source prompt and alias configurations
 if [[ -f ${BASE_PATH}/promptrc ]]; then
    source ${BASE_PATH}/promptrc

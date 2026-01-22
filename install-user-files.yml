@@ -1,0 +1,58 @@
+---
+## (c) 2026
+## Ramon Brooker <rbrooker@aeo3.io>
+## Cognitify Fancy Prompt - User Files Only Playbook
+
+- name: Install Cognitify User Dotfiles
+  hosts: all
+  become: yes
+  vars:
+    cognitify_user: "{{ ansible_user }}"
+  
+  tasks:
+    - name: Get user home directory
+      shell: "getent passwd {{ cognitify_user }} | cut -d: -f6"
+      register: user_home_result
+      changed_when: false
+
+    - name: Set user home directory
+      set_fact:
+        user_home: "{{ user_home_result.stdout }}"
+
+    - name: Backup existing .bashrc
+      copy:
+        src: "{{ user_home }}/.bashrc"
+        dest: "{{ user_home }}/.bashrc.orig"
+        remote_src: yes
+      when:
+        - stat(path=user_home + '/.bashrc', follow=true).stat.exists
+        - not stat(path=user_home + '/.bashrc.orig', follow=true).stat.exists
+
+    - name: Backup existing .profile
+      copy:
+        src: "{{ user_home }}/.profile"
+        dest: "{{ user_home }}/.profile.orig"
+        remote_src: yes
+      when:
+        - stat(path=user_home + '/.profile', follow=true).stat.exists
+        - not stat(path=user_home + '/.profile.orig', follow=true).stat.exists
+
+    - name: Install user dotfiles
+      copy:
+        src: "{{ item.src }}"
+        dest: "{{ user_home }}/{{ item.dest }}"
+        mode: '0644'
+        owner: "{{ cognitify_user }}"
+        group: "{{ cognitify_user }}"
+      loop:
+        - { src: 'src/home-files/bashrc', dest: '.bashrc' }
+        - { src: 'src/home-files/profile', dest: '.profile' }
+
+    - name: Install user override template
+      copy:
+        src: src/home-files/over-ride
+        dest: "{{ user_home }}/.over-ride"
+        mode: '0644'
+        owner: "{{ cognitify_user }}"
+        group: "{{ cognitify_user }}"
+      when: not stat(path=user_home + '/.over-ride', follow=true).stat.exists

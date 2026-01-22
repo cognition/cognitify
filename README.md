@@ -99,6 +99,10 @@ See `src/home-files/over-ride` for all available colour variables.
 
 ![Fancy Prompt Example](fancy-prompt-example.png)
 
+For a widescreen preview, see the larger version below:
+
+![Fancy Prompt Example (Large)](fancy-prompt-example-large.png)
+
 Use this screenshot as a quick preview of how the Cognitify Fancy Prompt appears once installed.
 
 ## Version

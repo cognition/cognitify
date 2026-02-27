@@ -19,6 +19,8 @@ fq
 dos2unix
 vim
 neovim
+xclip
+wl-clipboard
 openssl
 pwgen
 rsync

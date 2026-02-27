@@ -149,20 +149,61 @@ elif [[ -x /usr/bin/netstat ]]; then
 fi 
 
 # Docker-related aliases for container management
-if [[ -x /usr/bin/docker ]]; then
+if command -v docker >/dev/null 2>&1; then
     alias d='docker '
     alias dimages='docker images '
     alias dps='docker ps '
     alias dpsa='docker ps -a'
     alias dpull='docker pull '
     alias dsearch='docker search '
+    alias dstop='docker stop '
+    alias drmi='docker rmi '
+    alias dlogs='docker logs -f '
+    alias dcompose='docker compose '
+    alias dcompose-up='docker compose up -d'
+    alias dcompose-down='docker compose down'
+    alias dcompose-logs='docker compose logs -f'
+    complete -o default -F __start_docker d
+    complete -o default -F __start_docker dimages
+    complete -o default -F __start_docker dps
+    complete -o default -F __start_docker dpsa
+    complete -o default -F __start_docker dpull
+    complete -o default -F __start_docker dsearch
+    complete -o default -F __start_docker dstop
+    complete -o default -F __start_docker drmi
+    complete -o default -F __start_docker dlogs
+    complete -o default -F __start_docker dcompose
+    complete -o default -F __start_docker dcompose-up
+    complete -o default -F __start_docker dcompose-down
+    complete -o default -F __start_docker dcompose-logs
+
 fi
 
-# Podman-related aliases
-if [[  -x /usr/bin/podman ]]; then
+# Podman-related aliases (mirrors docker aliases; podman is docker-compatible)
+if command -v podman >/dev/null 2>&1; then
     alias p='podman '
+    alias pimages='podman images '
+    alias pps='podman ps '
     alias ppsa='podman ps -a'
+    alias ppull='podman pull '
+    alias psearch='podman search '
+    alias pstop='podman stop '
+    alias prmi='podman rmi '
+    alias plogs='podman logs -f '
+    alias pcompose='podman compose '
+    alias pcompose-up='podman compose up -d'
+    alias pcompose-down='podman compose down'
+    alias pcompose-logs='podman compose logs -f'
     alias prunit='podman run -dit '
+    complete -o default -F __start_podman p
+    complete -o default -F __start_podman pimages
+    complete -o default -F __start_podman pps
+    complete -o default -F __start_podman ppsa
+    complete -o default -F __start_podman ppull
+    complete -o default -F __start_podman psearch
+    complete -o default -F __start_podman pstop
+    complete -o default -F __start_podman prmi
+    complete -o default -F __start_podman plogs
 fi
 
 # Kubernetes management utility via kubectl

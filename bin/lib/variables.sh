@@ -38,7 +38,7 @@ COGNITIFY_DIRS=( "${COGNITIFY_BASE}" "${COGNITIFY_BASE}/lib" )
 
 cat > GENERAL <<EOF 
 bash-completion git ShellCheck cockpit cockpit-bridge sqlite3-devel sqlite3 tree unzip zip expect
-curl wget hwinfo jq fq dos2unix vim neovim openssh openssl pwgen rsync syntax-highlighting xfsdump xfsprogs 
+curl wget hwinfo jq fq dos2unix vim neovim xclip wl-clipboard openssh openssl pwgen rsync syntax-highlighting xfsdump xfsprogs 
 EOF
 
 cat > GENERAL_GUI <<EOF 

@@ -29,6 +29,7 @@ DISTRO_FILES_SRC ?= $(SRC_DIR)/distro-files
 PROFILE_D_SRC ?= $(SRC_DIR)/profile.d
 PROFILE_D_DEST ?= $(ETC_DIR)/profile.d
 SKEL_DEST ?= $(ETC_DIR)/skel
+NEOVIM_CONFIG_SRC ?= $(SRC_DIR)/config/nvim
 DOCKER_MODE ?= no
 HOSTNAME_COLOUR ?=
 USERNAME_COLOUR ?=
@@ -50,7 +51,7 @@ GREEN := \033[0;32m
 YELLOW := \033[0;33m
 NC := \033[0m # No Colour
 
-.PHONY: help all install install-root install-all install-config install-completions install-home install-bin install-docs install-man install-distro install-profile-d install-skel post-install clean uninstall check-root
+.PHONY: help all install install-root install-all install-config install-completions install-home install-bin install-docs install-man install-distro install-profile-d install-skel install-neovim-config post-install clean uninstall check-root
 
 help: ## Show this help message
 	@echo "Cognitify Build System"
@@ -82,7 +83,7 @@ check-root: ## Check if running as root (for install targets)
 		exit 1; \
 	fi
 
-install: check-root all install-config install-completions install-home install-bin install-distro install-docs install-man install-profile-d install-skel post-install ## Install all components
+install: check-root all install-config install-completions install-home install-bin install-distro install-docs install-man install-profile-d install-skel post-install install-neovim-config ## Install all components
 	@echo ""
 	@echo "$(GREEN)[cognitify]$(NC) Installation completed successfully!"
 	@echo "$(GREEN)[cognitify]$(NC) Version $(VERSION) installed"
@@ -561,7 +562,54 @@ install-skel: check-root ## Install dotfiles to /etc/skel for new users
 			echo "$(YELLOW)Warning: Extended home files source not found: $(HOME_FILES_EXTENDED_SRC)$(NC)" >&2; \
 		fi; \
 	fi
+	@if command -v nvim >/dev/null 2>&1 && [ -f "$(NEOVIM_CONFIG_SRC)/init.vim" ]; then \
+		install -d -m 755 "$(SKEL_DEST)/.config/nvim"; \
+		install -m 644 "$(NEOVIM_CONFIG_SRC)/init.vim" "$(SKEL_DEST)/.config/nvim/"; \
+		echo "$(GREEN)[cognitify]$(NC) Installed Neovim config to $(SKEL_DEST)/.config/nvim"; \
+	fi
 	@echo "$(GREEN)[cognitify]$(NC) Dotfiles installed to $(SKEL_DEST)"
+
+install-neovim-config: check-root ## Install Neovim config only when nvim is installed
+	@if ! command -v nvim >/dev/null 2>&1; then \
+		echo "$(YELLOW)[cognitify]$(NC) Neovim not found; skipping Neovim config installation"; \
+		exit 0; \
+	fi; \
+	if [ ! -f "$(NEOVIM_CONFIG_SRC)/init.vim" ]; then \
+		echo "$(YELLOW)Warning: Neovim config not found at $(NEOVIM_CONFIG_SRC)/init.vim$(NC)" >&2; \
+		exit 0; \
+	fi; \
+	if [ "$(ALL)" = "1" ]; then \
+		echo "$(GREEN)[cognitify]$(NC) Installing Neovim config for all users..."; \
+		INSTALLED=0; \
+		while IFS=: read -r username _ uid gid _ home_dir shell; do \
+			[ -z "$$username" ] || [ -z "$$home_dir" ] && continue; \
+			[ "$$uid" -lt 1000 ] && [ "$$username" != "root" ] && continue; \
+			[ ! -d "$$home_dir" ] && continue; \
+			case "$$shell" in /usr/sbin/nologin|/sbin/nologin|/bin/false) continue;; esac; \
+			NEOVIM_DIR="$$home_dir/.config/nvim"; \
+			install -d -m 755 "$$NEOVIM_DIR" 2>/dev/null || true; \
+			if cp "$(NEOVIM_CONFIG_SRC)/init.vim" "$$NEOVIM_DIR/init.vim" 2>/dev/null; then \
+				chown "$$username" "$$NEOVIM_DIR/init.vim" 2>/dev/null || true; \
+				chmod 644 "$$NEOVIM_DIR/init.vim"; \
+				echo "$(GREEN)[cognitify]$(NC) Installed Neovim config for $$username"; \
+				INSTALLED=$$((INSTALLED + 1)); \
+			fi; \
+		done < /etc/passwd; \
+		[ "$$INSTALLED" -gt 0 ] && echo "$(GREEN)[cognitify]$(NC) Neovim config installed for $$INSTALLED user(s)"; \
+	else \
+		HOME_DIR=$$(getent passwd "$(INSTALL_USER)" | cut -d: -f6); \
+		if [ -z "$$HOME_DIR" ]; then \
+			[ "$(INSTALL_USER)" = "root" ] && HOME_DIR="/root"; \
+		fi; \
+		[ -z "$$HOME_DIR" ] && { echo "$(RED)Error: Unable to resolve home for $(INSTALL_USER)$(NC)" >&2; exit 1; }; \
+		[ ! -d "$$HOME_DIR" ] && { echo "$(RED)Error: Home directory does not exist: $$HOME_DIR$(NC)" >&2; exit 1; }; \
+		NEOVIM_DIR="$$HOME_DIR/.config/nvim"; \
+		install -d -m 755 "$$NEOVIM_DIR"; \
+		cp "$(NEOVIM_CONFIG_SRC)/init.vim" "$$NEOVIM_DIR/"; \
+		chown "$(INSTALL_USER)" "$$NEOVIM_DIR/init.vim" 2>/dev/null || chown "$(INSTALL_USER)" "$$NEOVIM_DIR"; \
+		chmod 644 "$$NEOVIM_DIR/init.vim"; \
+		echo "$(GREEN)[cognitify]$(NC) Neovim config installed to $$NEOVIM_DIR"; \
+	fi
 
 post-install: check-root ## Run post-installation script (package installation)
 	@if [ "$(SKIP_PACKAGES)" = "yes" ]; then \

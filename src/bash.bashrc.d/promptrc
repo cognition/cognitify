@@ -55,23 +55,34 @@ fi
 # Assign colors for present working directory, with possible overrides
 PWD_COLOUR="${OVERRIDE_PWD_COLOUR:-$LT_BLUE}"
 
+# Prefix legacy fragment codes with ${COLOUR}; pass through full \\[\\033…\\] sequences (e.g.
+# ${BG_ORANGE}${FG_BLACK} from cognitifyColours) so overrides are not double-prefixed.
+_cognitify_prompt_colour_seq() {
+    local seq="$1"
+    if [[ "${seq}" == *'\[\033'* ]]; then
+        printf '%s' "${seq}"
+    else
+        printf '%s%s' "${COLOUR}" "${seq}"
+    fi
+}
+
 # Define bracket styles for prompt elements
 OPEN_BRACKET="${PS_SQUARE_BRACKETS}[${RESET}"
 CLOSE_BRACKET="${RESET}${PS_SQUARE_BRACKETS}]${RESET}"
 
-# Compile colored hostname and working directory strings
-HOSTNAME_GRP="${COLOUR}${HOSTNAME_COLOUR}\h${RESET}"  # Hostname with color
-PS_PWD="${COLOUR}${PWD_COLOUR}:\w ${RESET}"  # Working directory with color
+# Compile coloured hostname and working directory strings
+HOSTNAME_GRP="$(_cognitify_prompt_colour_seq "${HOSTNAME_COLOUR}")\h${RESET}"
+PS_PWD="$(_cognitify_prompt_colour_seq "${PWD_COLOUR}"):\w ${RESET}"
 
 # Format different parts of the user and root prompts
 USER_HOSTNAME="${OPEN_BRACKET}${HOSTNAME_GRP}${CLOSE_BRACKET} "  # User hostname
-USER_USER="${COLOUR}${USERNAME_COLOUR}\u${RESET}"  # User's username with color
-USER_PROMPT="${COLOUR}${USERNAME_COLOUR}\\$ ${RESET}"  # Prompt symbol ($) for normal users
+USER_USER="$(_cognitify_prompt_colour_seq "${USERNAME_COLOUR}")\u${RESET}"
+USER_PROMPT="$(_cognitify_prompt_colour_seq "${USERNAME_COLOUR}")\\$ ${RESET}"
 
 # Root user elements
-ROOT_USER="${COLOUR}${ROOT_RED}\u${RESET}"  # Root user's username in red
-ROOT_PROMPT="${COLOUR}${ROOT_RED}\\$ ${RESET}"  # Prompt symbol (#) for root
-ROOT_MESSAGE="${BOLD}${COLOUR}${ROOT_RED}_YOU_ARE_ROOT_ ${RESET}"  # Warning message for root users
+ROOT_USER="$(_cognitify_prompt_colour_seq "${ROOT_RED}")\u${RESET}"
+ROOT_PROMPT="$(_cognitify_prompt_colour_seq "${ROOT_RED}")\\$ ${RESET}"
+ROOT_MESSAGE="${BOLD}$(_cognitify_prompt_colour_seq "${ROOT_RED}")_YOU_ARE_ROOT_ ${RESET}"
 ROOT_FULL_MESSAGE="${ROOT_MESSAGE}${USER_HOSTNAME}"  # Combining root warning with hostname
 
 # Conditional root prompt message
@@ -102,3 +113,4 @@ fi
 
 # Clean up environment variables used for determining color support
 unset color_prompt force_color_prompt
+unset -f _cognitify_prompt_colour_seq

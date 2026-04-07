@@ -3,9 +3,9 @@
 
 BASE_PATH="/etc/bash.bashrc.d"
 
-if [[ -f ~/.over-write ]]; then 
-	source ~/.over-write
-fi 
+if [[ -f ~/.over-ride ]]; then
+	source ~/.over-ride
+fi
 
 
 # shellcheck source=/dev/null

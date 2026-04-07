@@ -2,6 +2,8 @@
 
 ##  ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 ##  automagical shell alias completion;
+##  https://github.com/cognition/complete-alias (fork of cykerway/complete-alias)
+##  needs bash-completion; use GNU bash 4.4+ on Linux.
 ##  ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
 ##  ============================================================================
@@ -24,15 +26,13 @@
 ##  ============================================================================
 ##  # environment variables
 ##
-##  these are envars read by this script; users are advised to set these envars
-##  before sourcing this script to customize its behavior, even though some may
-##  still work if set after sourcing this script; these envar names must follow
-##  this naming convention: all letters uppercase, no leading underscore, words
-##  separated by one underscore;
+##  envars read by this script; set before sourcing when possible (some still
+##  apply if set later). names: all uppercase, no leading underscore, words
+##  separated by a single underscore.
 ##  ============================================================================
 
-##  bool: true iff auto unmask alias commands; set it to false if auto unmask
-##  feels too slow, or custom unmask is necessary to make an unusual behavior;
+##  bool: iff auto-unmask alias commands. set 0 if it feels slow or you need a
+##  custom unmask for odd completion behaviour;
 COMPAL_AUTO_UNMASK="${COMPAL_AUTO_UNMASK:-0}"
 
 ##  ============================================================================
@@ -264,7 +264,7 @@ __compal__get_alias_body() {
 ##  command in the last pipeline;
 ##
 ##  warn: this function is made for alias body expansion; as such it does not
-##  support commmand substitutions, etc.; if you run its output as argv, then
+##  support command substitutions, etc.; if you run its output as argv, then
 ##  you run at your own risk; quotes and escapes may also disturb the result;
 ##
 ##  $1
@@ -284,10 +284,10 @@ __compal__split_cmd_line() {
     ##  and assignments for sake of alias completion; for detail, read `SIMPLE
     ##  COMMAND EXPANSION` in `man bash`;
 
-    ##  bool: check (outmost) redirection or assignment;
+    ##  bool: check (outermost) redirection or assignment;
     local check_redass=1
 
-    ##  bool: found (outmost) redirection or assignment in current word;
+    ##  bool: found (outermost) redirection or assignment in current word;
     local found_redass=0
 
     ##  examine each char of `str`; test branches are ordered; this order has
@@ -696,6 +696,7 @@ __compal__unmask_alias_auto() {
         ##  vanilla cspecs for this command; if a matched raw vanilla cspec is
         ##  found, then parse, save and run it; search is a loop because these
         ##  raw cspecs are not parsed yet;
+        local _cspec
         for _cspec in "${!__compal__raw_vanilla_cspecs[@]}"; do
             if [[ "$_cspec" == *" $cmd" ]]; then
                 __compal__split_cmd_line "$_cspec"
@@ -932,7 +933,7 @@ __compal__complete_alias() {
     ##  we expand aliases only for the original command line (ie: the command
     ##  line on which user pressed `<tab>`); unfortunately, we may not have a
     ##  chance to see the original command line, and we have no way to ensure
-    ##  that; we take an approximation: we expand aliases only in the outmost
+    ##  that; we take an approximation: we expand aliases only in the outermost
     ##  call of this function, which implies only on the first occasion of an
     ##  alias command; we can ensure this condition using a refcnt and expand
     ##  aliases iff the refcnt is equal to 0; this approximation always works
@@ -954,7 +955,7 @@ __compal__complete_alias() {
     if (( __compal__refcnt == 0 )); then
 
         ##  find index range of word `$COMP_WORDS[$COMP_CWORD]` in string
-        ##  `$COMP_LINE`; dont expand this word if `$COMP_POINT` (cursor
+        ##  `$COMP_LINE`; do not expand this word if `$COMP_POINT` (cursor
         ##  position) lies in this range because the word may be incomplete;
         local i=0 j=0
         for (( ; i <= $COMP_CWORD; i++ )); do
@@ -1049,14 +1050,11 @@ __compal__main() {
 __compal__main
 
 ##  ============================================================================
-##  # complete user-defined aliases
+##  # completing aliases (when not using cognitify last-line)
 ##  ============================================================================
 
-##  to complete specific aliases, uncomment and edit these lines;
-#complete -F _complete_alias myalias1
-#complete -F _complete_alias myalias2
-#complete -F _complete_alias myalias3
-
-##  to complete all aliases, run this line after all aliases have been defined;
-#complete -F _complete_alias "${!BASH_ALIASES[@]}"
+##  specific names:
+##  #complete -F _complete_alias name1 name2
+##  all current aliases (run after aliases exist):
+##  #complete -F _complete_alias "${!BASH_ALIASES[@]}"
 

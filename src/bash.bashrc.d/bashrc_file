@@ -40,7 +40,7 @@ if [[  -f ${BASE_PATH}/aliasrc ]] ; then
 fi
 
 
-## Local Over ride file to over ride anything from standard
+## Local override: ~/.over-ride
 if [[  -f "${HOME}"/.over-ride ]] ; then
    source "${HOME}"/.over-ride
 fi
@@ -109,7 +109,7 @@ fi
 
 
 
-## Local Over ride file to over ride anything from standard
+## Local override: ~/.over-ride
 if [[  -f "${HOME}"/.over-ride ]] ; then
    source "${HOME}"/.over-ride
 fi

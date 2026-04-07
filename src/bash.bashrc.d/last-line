@@ -1,14 +1,14 @@
 ## (c) 2026
 ## Ramon Brooker <rbrooker@aeo3.io>
 
-## Check and source the bash completion file if it exists ##
+## Attach _complete_alias to all aliases after bash-completion loads
+## /etc/bash_completion.d/complete_alias. Skip if none (bare `complete -F` errors).
+## Fork: https://github.com/cognition/complete-alias
 
-# The following line checks whether a file named 'complete_alias' exists
-# in the directory '/etc/bash_completion.d/'. This directory usually
-# contains shell script files that provide completion functions for bash.
-# The '-f' option is used with 'if' to test if the specified file exists
-# and is a regular file.
-if [[ -f /etc/bash_completion.d/complete_alias ]]; then
+if [[ -f /etc/bash_completion.d/complete_alias ]] \
+    && declare -F _complete_alias >/dev/null 2>&1 \
+    && ((${#BASH_ALIASES[@]} > 0)); then
     complete -F _complete_alias "${!BASH_ALIASES[@]}"
-fi 
-## Nothing Below here ##
+fi
+
+## Nothing below here ##

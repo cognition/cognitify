@@ -87,6 +87,7 @@ sudo make install
 - `make install-prompts` - Install only prompt configuration files
 - `make install-completions` - Install only shell completions
 - `make install-home` - Install only user dotfiles
+- `make install-home` can be run without `sudo` for the current user once `$(ETC_DIR)/bash.bashrc.d` is already installed; root is still required for `ALL=1` or another target user
 - `make install-bin` - Install only user binaries
 - `make install-distro` - Install only distro-specific files
 - `make post-install` - Run post-installation script (package installation)

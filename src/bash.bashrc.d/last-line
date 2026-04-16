@@ -1,14 +1,23 @@
 ## (c) 2026
 ## Ramon Brooker <rbrooker@aeo3.io>
 
-## Attach _complete_alias to all aliases after bash-completion loads
-## /etc/bash_completion.d/complete_alias. Skip if none (bare `complete -F` errors).
+## complete-alias: register completions for every alias. Some distros never
+## source /etc/bash_completion.d/complete_alias; define _complete_alias here if
+## missing so `complete -F` does not point at a non-existent function.
 ## Fork: https://github.com/cognition/complete-alias
 
-if [[ -f /etc/bash_completion.d/complete_alias ]] \
-    && declare -F _complete_alias >/dev/null 2>&1 \
-    && ((${#BASH_ALIASES[@]} > 0)); then
-    complete -F _complete_alias "${!BASH_ALIASES[@]}"
+COMPAL_COMPLETE_ALIAS="/etc/bash_completion.d/complete_alias"
+
+if [[ -f "$COMPAL_COMPLETE_ALIAS" ]]; then
+    if ! declare -F _complete_alias >/dev/null 2>&1; then
+        # shellcheck source=/dev/null
+        source "$COMPAL_COMPLETE_ALIAS"
+    fi
+    if declare -F _complete_alias >/dev/null 2>&1 && ((${#BASH_ALIASES[@]} > 0)); then
+        complete -F _complete_alias "${!BASH_ALIASES[@]}"
+    fi
 fi
+
+unset COMPAL_COMPLETE_ALIAS
 
 ## Nothing below here ##

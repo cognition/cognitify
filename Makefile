@@ -205,8 +205,25 @@ install-completions: check-root ## Install shell completions (standard and optio
 	fi
 	@echo "$(GREEN)[cognitify]$(NC) Completions installed to $(COMPLETIONS_DEST)"
 
-install-home: check-root ## Install user dotfiles
-	@if [ "$(ALL)" = "1" ]; then \
+install-home: ## Install user dotfiles
+	@CURRENT_UID=$$(id -u); \
+	CURRENT_USER=$$(id -un); \
+	if [ "$(ALL)" = "1" ]; then \
+		if [ "$$CURRENT_UID" -ne 0 ]; then \
+			echo "$(RED)Error: install-home with ALL=1 requires root privileges.$(NC)" >&2; \
+			exit 1; \
+		fi; \
+	elif [ "$$CURRENT_UID" -ne 0 ]; then \
+		if [ "$(INSTALL_USER)" != "$$CURRENT_USER" ]; then \
+			echo "$(RED)Error: Non-root install-home can only target the current user ($(INSTALL_USER) requested, $$CURRENT_USER active).$(NC)" >&2; \
+			exit 1; \
+		fi; \
+		if [ ! -d "$(CONFIG_DEST)" ]; then \
+			echo "$(RED)Error: Shared configuration is not installed at $(CONFIG_DEST). Run sudo make install-config first.$(NC)" >&2; \
+			exit 1; \
+		fi; \
+	fi; \
+	if [ "$(ALL)" = "1" ]; then \
 		echo "$(GREEN)[cognitify]$(NC) Installing home directory files for all users..."; \
 		if [ ! -d "$(HOME_FILES_SRC)" ]; then \
 			echo "$(YELLOW)Warning: Home files source not found: $(HOME_FILES_SRC)$(NC)" >&2; \
@@ -236,7 +253,11 @@ install-home: check-root ## Install user dotfiles
 				base=".$$(basename "$$file")"; \
 				dest="$$home_dir/$$base"; \
 				if [ -e "$$dest" ] && [ ! -e "$$dest.orig" ]; then \
-					if ! cp "$$dest" "$$dest.orig" 2>/dev/null; then \
+					if cp "$$dest" "$$dest.orig" 2>/dev/null; then \
+						if ! chown "$$username:$$USER_GROUP" "$$dest.orig" 2>/dev/null && ! chown "$$username" "$$dest.orig" 2>/dev/null; then \
+							echo "$(YELLOW)Warning: Failed to set ownership for $$base.orig for user $$username$(NC)" >&2; \
+						fi; \
+					else \
 						echo "$(YELLOW)Warning: Failed to backup $$base for user $$username$(NC)" >&2; \
 					fi; \
 				fi; \
@@ -255,7 +276,11 @@ install-home: check-root ## Install user dotfiles
 					base=".$$(basename "$$file")"; \
 					dest="$$home_dir/$$base"; \
 					if [ -e "$$dest" ] && [ ! -e "$$dest.orig" ]; then \
-						if ! cp "$$dest" "$$dest.orig" 2>/dev/null; then \
+						if cp "$$dest" "$$dest.orig" 2>/dev/null; then \
+							if ! chown "$$username:$$USER_GROUP" "$$dest.orig" 2>/dev/null && ! chown "$$username" "$$dest.orig" 2>/dev/null; then \
+								echo "$(YELLOW)Warning: Failed to set ownership for $$base.orig for user $$username$(NC)" >&2; \
+							fi; \
+						else \
 							echo "$(YELLOW)Warning: Failed to backup $$base for user $$username$(NC)" >&2; \
 						fi; \
 					fi; \
@@ -373,10 +398,15 @@ install-home: check-root ## Install user dotfiles
 			dest="$$HOME_DIR/$$base"; \
 			if [ -e "$$dest" ] && [ ! -e "$$dest.orig" ]; then \
 				cp "$$dest" "$$dest.orig"; \
+				if [ "$$CURRENT_UID" -eq 0 ]; then \
+					chown "$(INSTALL_USER):$$USER_GROUP" "$$dest.orig" 2>/dev/null || chown "$(INSTALL_USER)" "$$dest.orig"; \
+				fi; \
 				echo "$(GREEN)[cognitify]$(NC) Backed up existing $$base to $$base.orig"; \
 			fi; \
 			cp "$$file" "$$dest"; \
-			chown "$(INSTALL_USER):$$USER_GROUP" "$$dest" 2>/dev/null || chown "$(INSTALL_USER)" "$$dest"; \
+			if [ "$$CURRENT_UID" -eq 0 ]; then \
+				chown "$(INSTALL_USER):$$USER_GROUP" "$$dest" 2>/dev/null || chown "$(INSTALL_USER)" "$$dest"; \
+			fi; \
 		done; \
 		if [ "$(EXTENDED_HOME_FILES)" = "yes" ]; then \
 			if [ -d "$(HOME_FILES_EXTENDED_SRC)" ]; then \
@@ -387,10 +417,15 @@ install-home: check-root ## Install user dotfiles
 					dest="$$HOME_DIR/$$base"; \
 					if [ -e "$$dest" ] && [ ! -e "$$dest.orig" ]; then \
 						cp "$$dest" "$$dest.orig"; \
+						if [ "$$CURRENT_UID" -eq 0 ]; then \
+							chown "$(INSTALL_USER):$$USER_GROUP" "$$dest.orig" 2>/dev/null || chown "$(INSTALL_USER)" "$$dest.orig"; \
+						fi; \
 						echo "$(GREEN)[cognitify]$(NC) Backed up existing $$base to $$base.orig"; \
 					fi; \
 					cp "$$file" "$$dest"; \
-					chown "$(INSTALL_USER):$$USER_GROUP" "$$dest" 2>/dev/null || chown "$(INSTALL_USER)" "$$dest"; \
+					if [ "$$CURRENT_UID" -eq 0 ]; then \
+						chown "$(INSTALL_USER):$$USER_GROUP" "$$dest" 2>/dev/null || chown "$(INSTALL_USER)" "$$dest"; \
+					fi; \
 					echo "$(GREEN)[cognitify]$(NC) Installed extended home file: $$base"; \
 				done; \
 			else \
@@ -461,7 +496,9 @@ install-home: check-root ## Install user dotfiles
 					} \
 				' "$$OVERRIDE_FILE" > "$$TEMP_FILE"; \
 				mv "$$TEMP_FILE" "$$OVERRIDE_FILE"; \
-				chown "$(INSTALL_USER):$$USER_GROUP" "$$OVERRIDE_FILE" 2>/dev/null || chown "$(INSTALL_USER)" "$$OVERRIDE_FILE"; \
+				if [ "$$CURRENT_UID" -eq 0 ]; then \
+					chown "$(INSTALL_USER):$$USER_GROUP" "$$OVERRIDE_FILE" 2>/dev/null || chown "$(INSTALL_USER)" "$$OVERRIDE_FILE"; \
+				fi; \
 			fi; \
 		fi; \
 		echo "$(GREEN)[cognitify]$(NC) Home files installed to $$HOME_DIR"; \

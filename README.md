@@ -31,6 +31,8 @@ What the installer does:
 3. Copies completions into `/etc/bash_completion.d`.
 4. Copies dotfiles into the target user's home directory, backing up any existing files to `.orig` once.
 
+After `/etc/bash.bashrc.d` is in place, a user may rerun `make install-home` for their own account without `sudo`. Root is still required for `ALL=1` or when installing dotfiles for another user.
+
 ## Maintenance
 
 - Repository version is tracked in `version` and release notes live in `changelog/`.

@@ -1,0 +1,24 @@
+---
+galaxy_info:
+  role_name: cognitify
+  author: Ramon Brooker
+  description: Install Cognitify from source (configure, make, make install).
+  company: aeo3.io
+  license: NOASSERTION
+  min_ansible_version: "2.14"
+  platforms:
+    - name: EL
+      versions: ["8", "9", "10"]
+    - name: Debian
+      versions: ["all"]
+    - name: Ubuntu
+      versions: ["all"]
+    - name: opensuse
+      versions: ["all"]
+  galaxy_tags:
+    - cognitify
+    - shell
+    - bash
+    - dotfiles
+
+dependencies: []

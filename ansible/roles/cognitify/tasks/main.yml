@@ -1,0 +1,89 @@
+---
+- name: Ensure target OS is Linux
+  ansible.builtin.assert:
+    that:
+      - ansible_system == "Linux"
+    fail_msg: This role supports Linux managed nodes only.
+
+- name: Validate deploy method
+  ansible.builtin.assert:
+    that:
+      - cognitify_deploy_method in ['git', 'copy']
+    fail_msg: cognitify_deploy_method must be "git" or "copy".
+
+- name: Validate package target when packages are enabled
+  ansible.builtin.assert:
+    that:
+      - cognitify_skip_packages | bool or cognitify_package_target in ['host', 'docker', 'gui']
+    fail_msg: cognitify_package_target must be one of host, docker, or gui unless cognitify_skip_packages is true.
+
+- name: Require controller source path for copy deploy
+  ansible.builtin.assert:
+    that:
+      - (cognitify_controller_source | length) > 0
+    fail_msg: Set cognitify_controller_source to the repository root on the Ansible controller when cognitify_deploy_method is copy.
+  when: cognitify_deploy_method == 'copy'
+
+- name: Resolve prerequisite package list
+  ansible.builtin.set_fact:
+    _cognitify_prereq: "{{ (cognitify_prereq_packages_by_family[ansible_os_family] | default(['make'])) + ((cognitify_git_prereq_packages_by_family[ansible_os_family] | default(['git'])) if cognitify_deploy_method == 'git' else []) }}"
+
+- name: Install prerequisite packages
+  ansible.builtin.package:
+    name: "{{ _cognitify_prereq }}"
+    state: present
+  when: cognitify_install_prereq_packages | bool
+
+- name: Ensure install directory exists
+  ansible.builtin.file:
+    path: "{{ cognitify_install_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Deploy Cognitify from Git
+  ansible.builtin.git:
+    repo: "{{ cognitify_git_repo }}"
+    version: "{{ cognitify_git_version }}"
+    dest: "{{ cognitify_install_dir }}"
+    force: "{{ cognitify_git_force | bool }}"
+  when: cognitify_deploy_method == 'git'
+
+- name: Deploy Cognitify from controller copy
+  ansible.builtin.copy:
+    src: "{{ cognitify_controller_source }}/"
+    dest: "{{ cognitify_install_dir }}/"
+    owner: root
+    group: root
+    mode: preserve
+  when: cognitify_deploy_method == 'copy'
+
+- name: Ensure configure and post-install scripts are executable
+  ansible.builtin.file:
+    path: "{{ cognitify_install_dir }}/{{ item }}"
+    owner: root
+    group: root
+    mode: "0755"
+  loop:
+    - configure
+    - post-install.sh
+
+- name: Build configure argv
+  ansible.builtin.set_fact:
+    cognitify_configure_argv: "{{ ([cognitify_install_dir ~ '/configure', '--prefix=' ~ cognitify_prefix | string, '--etc-dir=' ~ cognitify_etc_dir | string, '--user=' ~ cognitify_install_user | string] + (['--skip-packages'] if cognitify_skip_packages | bool else ['--package-target=' ~ cognitify_package_target | string]) + (['--include-cockpit'] if cognitify_include_cockpit | bool else []) + (['--extended-completions'] if cognitify_extended_completions | bool else []) + (['--extended-home-files'] if cognitify_extended_home_files | bool else []) + (['--hostname-colour=' ~ cognitify_hostname_colour] if (cognitify_hostname_colour | default('') | length) > 0 else []) + (['--username-colour=' ~ cognitify_username_colour] if (cognitify_username_colour | default('') | length) > 0 else []) + (['--pwd-colour=' ~ cognitify_pwd_colour] if (cognitify_pwd_colour | default('') | length) > 0 else []) + cognitify_extra_configure_args) }}"
+
+- name: Run configure
+  ansible.builtin.command:
+    argv: "{{ cognitify_configure_argv }}"
+    chdir: "{{ cognitify_install_dir }}"
+
+- name: Run make (build)
+  ansible.builtin.command:
+    argv: ["make", "{{ cognitify_make_build_target }}"]
+    chdir: "{{ cognitify_install_dir }}"
+
+- name: Run make install
+  ansible.builtin.command:
+    argv: ["make", "{{ cognitify_make_install_target }}"]
+    chdir: "{{ cognitify_install_dir }}"

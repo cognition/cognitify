@@ -31,6 +31,7 @@ PROFILE_D_DEST ?= $(ETC_DIR)/profile.d
 SKEL_DEST ?= $(ETC_DIR)/skel
 NEOVIM_CONFIG_SRC ?= $(SRC_DIR)/config/nvim
 DOCKER_MODE ?= no
+INCLUDE_COCKPIT ?= no
 HOSTNAME_COLOUR ?=
 USERNAME_COLOUR ?=
 PWD_COLOUR ?=
@@ -51,7 +52,7 @@ GREEN := \033[0;32m
 YELLOW := \033[0;33m
 NC := \033[0m # No Colour
 
-.PHONY: help all install install-root install-all install-config install-completions install-home install-bin install-docs install-man install-distro install-profile-d install-skel install-neovim-config post-install clean uninstall check-root
+.PHONY: help all install install-root install-all install-config install-completions install-home install-bin install-docs install-man install-distro install-profile-d install-skel install-neovim-config post-install post-install-cockpit clean uninstall check-root
 
 help: ## Show this help message
 	@echo "Cognitify Build System"
@@ -65,6 +66,8 @@ help: ## Show this help message
 	@echo "  Prefix: $(PREFIX)"
 	@echo "  Config Dest: $(CONFIG_DEST)"
 	@echo "  Install User: $(INSTALL_USER)"
+	@echo "  Package Target: $(PACKAGE_TARGET)"
+	@echo "  Include Cockpit Packages: $(INCLUDE_COCKPIT)"
 
 all: ## Build the project (currently just validates)
 	@echo "$(GREEN)[cognitify]$(NC) Building..."
@@ -658,7 +661,10 @@ post-install: check-root ## Run post-installation script (package installation)
 		exit 0; \
 	fi
 	@echo "$(GREEN)[cognitify]$(NC) Running post-installation package script..."
-	@./post-install.sh "$(PKG_MANAGER)" "$(PKG_MANAGER_INSTALL)" "$(PKG_MANAGER_UPDATE)" "$(PACKAGES_DIR)" "$(INCLUDE_GUI)" "$(DOCKER_MODE)"
+	@./post-install.sh "$(PKG_MANAGER)" "$(PKG_MANAGER_INSTALL)" "$(PKG_MANAGER_UPDATE)" "$(PACKAGES_DIR)" "$(INCLUDE_GUI)" "$(DOCKER_MODE)" "$(INCLUDE_COCKPIT)"
+
+post-install-cockpit: check-root ## Run package install including Cockpit (same as post-install with INCLUDE_COCKPIT=yes)
+	@$(MAKE) post-install INCLUDE_COCKPIT=yes
 
 clean: ## Clean build artifacts
 	@echo "$(GREEN)[cognitify]$(NC) Cleaning..."

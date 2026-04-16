@@ -4,8 +4,6 @@
 
 bash-completion
 git
-cockpit
-cockpit-bridge
 sqlite3
 tree
 unzip
@@ -18,9 +16,7 @@ jq
 fq
 dos2unix
 vim
-neovim
 xclip
-wl-clipboard
 openssl
 pwgen
 rsync

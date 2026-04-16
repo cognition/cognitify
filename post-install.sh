@@ -31,6 +31,7 @@ PKG_MANAGER_UPDATE="${3:-}"
 PACKAGES_DIR="${4:-src/packages}"
 INCLUDE_GUI="${5:-no}"
 DOCKER_MODE="${6:-no}"
+INCLUDE_COCKPIT="${7:-no}"
 
 # Check if running as root
 if [[ $EUID -ne 0 ]]; then
@@ -98,6 +99,13 @@ collect_packages() {
         while IFS= read -r pkg; do
             [[ -n "$pkg" ]] && packages+=("$pkg")
         done < <(read_packages "$PACKAGES_DIR/GENERAL_GUI")
+    fi
+
+    # Optional Cockpit (web console) packages
+    if [[ "$INCLUDE_COCKPIT" = "yes" ]]; then
+        while IFS= read -r pkg; do
+            [[ -n "$pkg" ]] && packages+=("$pkg")
+        done < <(read_packages "$PACKAGES_DIR/COCKPIT")
     fi
     
     # Read manager-specific packages
@@ -171,6 +179,7 @@ main() {
     log "Package Manager: $PKG_MANAGER"
     log "Include GUI: $INCLUDE_GUI"
     log "Docker Mode: $DOCKER_MODE"
+    log "Include Cockpit: $INCLUDE_COCKPIT"
     
     install_packages
     

@@ -196,7 +196,11 @@ This is a distribution-specific package of Cognitify version ${version} for ${di
 ## Installation
 
 \`\`\`bash
-./configure
+./configure --package-target=host
+# or: ./configure --package-target=docker
+# or: ./configure --package-target=gui
+# Optional Cockpit: add --include-cockpit
+# To skip distro packages: ./configure --skip-packages
 make
 sudo make install
 \`\`\`
@@ -247,7 +251,7 @@ EOF
     log "To install this package:"
     log "  tar -xzf $archive_path"
     log "  cd $package_name"
-    log "  ./configure"
+    log "  ./configure --package-target=host   # or docker | gui; see --help"
     log "  make"
     log "  sudo make install"
 }

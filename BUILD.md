@@ -5,7 +5,7 @@ This document describes how to build and install Cognitify using the standard GN
 ## Quick Start
 
 ```bash
-./configure
+./configure --package-target=host
 make
 sudo make install
 ```
@@ -18,27 +18,36 @@ The configure script detects your Linux distribution and sets up the build confi
 
 **Basic usage:**
 ```bash
-./configure
+./configure --package-target=host
 ```
 
 **Options:**
 - `--prefix=DIR` - Installation prefix (default: `/usr/local`)
 - `--etc-dir=DIR` - System configuration directory (default: `/etc`)
 - `--user=USER` - User to install dotfiles for (default: current user)
-- `--include-gui` - Include GUI packages in installation
+- `--package-target=PROFILE` - Package profile when installing packages: `host`, `docker`, or `gui` (required on normal hosts unless you use `--docker`, `--include-gui`, or `--skip-packages`; inside a container, `docker` is assumed if omitted)
+- `--include-gui` - Same as `--package-target=gui`
+- `--docker` - Same as `--package-target=docker`
+- `--include-cockpit` - Add Cockpit packages (`src/packages/COCKPIT`)
 - `--skip-packages` - Skip package installation
 - `--help` - Show help message
 
 **Examples:**
 ```bash
+# Standard server or VM (GENERAL package list)
+./configure --package-target=host
+
+# Optional Cockpit on top of host profile
+./configure --package-target=host --include-cockpit
+
 # Install with GUI packages
 ./configure --include-gui
 
 # Install to custom prefix
-./configure --prefix=/usr
+./configure --prefix=/usr --package-target=host
 
 # Install for specific user
-./configure --user=john
+./configure --user=john --package-target=host
 
 # Skip package installation (install files only)
 ./configure --skip-packages
@@ -50,6 +59,8 @@ You can also set these via environment variables:
 - `ETC_DIR` - System configuration directory
 - `INSTALL_USER` - User for dotfiles installation
 - `INCLUDE_GUI` - Set to `yes` to include GUI packages
+- `PACKAGE_TARGET` - `host`, `docker`, or `gui`
+- `INCLUDE_COCKPIT` - Set to `yes` to install Cockpit-related packages
 - `SKIP_PACKAGES` - Set to `yes` to skip package installation
 
 The configure script generates a `config.mk` file with all build settings.
@@ -110,8 +121,10 @@ RHEL is fully supported and will be automatically detected whether the system re
 After installing files, the post-installation script (`post-install.sh`) automatically installs required packages using your distribution's package manager.
 
 **Package files:**
-- `src/packages/GENERAL` - Packages common to all distributions
-- `src/packages/GENERAL_GUI` - GUI packages (optional, use `--include-gui`)
+- `src/packages/GENERAL` - Packages common to all distributions (`--package-target=host`)
+- `src/packages/GENERAL DOCKER` - Container-oriented list (`--package-target=docker` or `--docker`)
+- `src/packages/GENERAL_GUI` - GUI packages (`--package-target=gui` or `--include-gui`)
+- `src/packages/COCKPIT` - Cockpit packages (optional, `--include-cockpit` or `make post-install-cockpit`)
 - `src/packages/PACKAGES_APT` - Debian/Ubuntu specific packages
 - `src/packages/PACKAGES_YUM` - RHEL/CentOS/Fedora specific packages
 - `src/packages/PACKAGES_ZYPPER` - openSUSE/SLES specific packages
@@ -134,7 +147,7 @@ This will:
 ## Troubleshooting
 
 ### "config.mk not found"
-Run `./configure` first to generate the configuration file.
+Run `./configure` with a valid profile (for example `./configure --package-target=host` or `./configure --skip-packages`) to generate `config.mk`.
 
 ### "Permission denied"
 Installation requires root privileges. Use `sudo make install`.
@@ -150,7 +163,7 @@ Check your package manager configuration and network connectivity. The installat
 ### Custom Installation Paths
 
 ```bash
-./configure --prefix=/opt/cognitify --etc-dir=/opt/etc
+./configure --prefix=/opt/cognitify --etc-dir=/opt/etc --package-target=host
 make
 sudo make install
 ```
@@ -158,7 +171,7 @@ sudo make install
 ### Development Installation
 
 ```bash
-./configure --prefix=$HOME/.local
+./configure --prefix=$HOME/.local --skip-packages
 make
 make install  # No sudo needed for user prefix
 ```

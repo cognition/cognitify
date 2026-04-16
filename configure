@@ -12,6 +12,8 @@ INSTALL_USER="${INSTALL_USER:-${SUDO_USER:-${USER}}}"
 INCLUDE_GUI="${INCLUDE_GUI:-no}"
 SKIP_PACKAGES="${SKIP_PACKAGES:-no}"
 DOCKER_MODE="${DOCKER_MODE:-no}"
+PACKAGE_TARGET="${PACKAGE_TARGET:-}"
+INCLUDE_COCKPIT="${INCLUDE_COCKPIT:-no}"
 EXTENDED_COMPLETIONS="${EXTENDED_COMPLETIONS:-no}"
 EXTENDED_HOME_FILES="${EXTENDED_HOME_FILES:-no}"
 HOSTNAME_COLOUR="${HOSTNAME_COLOUR:-}"
@@ -108,6 +110,77 @@ detect_distro() {
     esac
 }
 
+# Resolve package list profile when packages are installed
+finalize_package_target() {
+    if [[ "$SKIP_PACKAGES" == "yes" ]]; then
+        return 0
+    fi
+
+    if [[ "$INCLUDE_GUI" == "yes" && "$DOCKER_MODE" == "yes" ]]; then
+        echo "Error: GUI and Docker package lists cannot be combined. Use --package-target=host|docker|gui." >&2
+        exit 1
+    fi
+
+    if [[ -n "$PACKAGE_TARGET" ]]; then
+        case "$PACKAGE_TARGET" in
+            host)
+                DOCKER_MODE="no"
+                INCLUDE_GUI="no"
+                ;;
+            docker)
+                DOCKER_MODE="yes"
+                INCLUDE_GUI="no"
+                ;;
+            gui)
+                DOCKER_MODE="no"
+                INCLUDE_GUI="yes"
+                ;;
+            *)
+                echo "Error: Invalid --package-target='$PACKAGE_TARGET' (use host, docker, or gui)." >&2
+                exit 1
+                ;;
+        esac
+        return 0
+    fi
+
+    if [[ "$DOCKER_MODE" == "yes" ]]; then
+        PACKAGE_TARGET="docker"
+        INCLUDE_GUI="no"
+        return 0
+    fi
+
+    if [[ "$INCLUDE_GUI" == "yes" ]]; then
+        PACKAGE_TARGET="gui"
+        DOCKER_MODE="no"
+        return 0
+    fi
+
+    if detect_docker; then
+        DOCKER_MODE="yes"
+        PACKAGE_TARGET="docker"
+        return 0
+    fi
+
+    cat <<EOF >&2
+Error: Package installation is enabled but no package list profile was selected.
+
+Choose exactly one of:
+  --package-target=host    Standard systems (GENERAL package list)
+  --package-target=docker  Containers and minimal hosts (GENERAL DOCKER list)
+  --package-target=gui     Graphical workstations (GENERAL plus GENERAL_GUI)
+
+Shorthand flags (equivalent to the above):
+  --docker                 Same as --package-target=docker
+  --include-gui            Same as --package-target=gui
+
+To install files without any packages:
+  --skip-packages
+
+Re-run configure with one of these options, then run make install.
+EOF
+    exit 1
+}
+
 # Parse command line arguments
 parse_args() {
     while [[ $# -gt 0 ]]; do
@@ -144,6 +217,10 @@ parse_args() {
                 INCLUDE_GUI="yes"
                 shift
                 ;;
+            --include-cockpit)
+                INCLUDE_COCKPIT="yes"
+                shift
+                ;;
             --skip-packages)
                 SKIP_PACKAGES="yes"
                 shift
@@ -151,6 +228,14 @@ parse_args() {
             --docker)
                 DOCKER_MODE="yes"
                 shift
+                ;;
+            --package-target=*)
+                PACKAGE_TARGET="${1#*=}"
+                shift
+                ;;
+            --package-target)
+                PACKAGE_TARGET="$2"
+                shift 2
                 ;;
             --extended-completions)
                 EXTENDED_COMPLETIONS="yes"
@@ -167,10 +252,6 @@ parse_args() {
             --distro-package)
                 DISTRO_PACKAGE="$2"
                 shift 2
-                ;;
-            --hostname-colour=*)
-                HOSTNAME_COLOUR="${1#*=}"
-                shift
                 ;;
             --hostname-colour=*)
                 HOSTNAME_COLOUR="${1#*=}"
@@ -213,9 +294,13 @@ Options:
   --etc-dir=DIR          System configuration directory (default: /etc)
   --user=USER            User to install dotfiles for (default: current user)
   --root                 Install dotfiles for root user (equivalent to --user=root)
-  --include-gui          Include GUI packages in installation
+  --include-gui          Include GUI packages (same as --package-target=gui)
+  --include-cockpit      Add Cockpit packages from src/packages/COCKPIT
   --skip-packages        Skip package installation
-  --docker               Use Docker/container mode (uses pared down package list)
+  --docker               Use Docker/container package list (same as --package-target=docker)
+  --package-target=PROFILE  Package profile when installing packages: host | docker | gui
+                          Required on normal hosts unless you pass --docker, --include-gui,
+                          or --skip-packages. Inside a container, docker is assumed if omitted.
   --extended-completions Install extended completions (kubectl, helm, terraform, etc.)
   --extended-home-files Install extended home files (terraformrc, shellcheckrc, etc.)
   --hostname-colour=COLOUR Set default hostname colour (e.g., AZURE, BRIGHT_PINK, OLIVE)
@@ -231,8 +316,10 @@ Environment variables:
   ETC_DIR                System configuration directory
   INSTALL_USER           User for dotfiles installation
   INCLUDE_GUI            Set to 'yes' to include GUI packages
+  INCLUDE_COCKPIT        Set to 'yes' to install Cockpit-related packages
   SKIP_PACKAGES          Set to 'yes' to skip package installation
   DOCKER_MODE            Set to 'yes' to use Docker/container mode
+  PACKAGE_TARGET         host | docker | gui (explicit package list selection)
   EXTENDED_COMPLETIONS   Set to 'yes' to install extended completions
   EXTENDED_HOME_FILES    Set to 'yes' to install extended home files
   HOSTNAME_COLOUR        Set default hostname colour (e.g., AZURE, BRIGHT_PINK, OLIVE)
@@ -242,6 +329,8 @@ Environment variables:
                          When 'random' is used, automatically sets HOSTNAME_COLOUR, USERNAME_COLOUR, and PWD_COLOUR
 
 Examples:
+  $0 --package-target=host
+  $0 --package-target=host --include-cockpit
   $0 --prefix=/usr --include-gui
   $0 --user=john --skip-packages
   $0 --hostname-colour=AZURE
@@ -339,6 +428,7 @@ select_random_colour_profile() {
 # Generate config.mk
 generate_config() {
     detect_distro
+    finalize_package_target
     
     # Handle colour profile selection
     if [[ "$COLOUR_PROFILE" == "random" ]]; then
@@ -371,11 +461,11 @@ PKG_MANAGER_UPDATE = ${PKG_MANAGER_UPDATE}
 INCLUDE_GUI = ${INCLUDE_GUI}
 SKIP_PACKAGES = ${SKIP_PACKAGES}
 DOCKER_MODE = ${DOCKER_MODE}
+PACKAGE_TARGET = ${PACKAGE_TARGET}
+INCLUDE_COCKPIT = ${INCLUDE_COCKPIT}
 EXTENDED_COMPLETIONS = ${EXTENDED_COMPLETIONS}
 EXTENDED_HOME_FILES = ${EXTENDED_HOME_FILES}
 HOSTNAME_COLOUR = ${HOSTNAME_COLOUR}
-USERNAME_COLOUR = ${USERNAME_COLOUR}
-PWD_COLOUR = ${PWD_COLOUR}
 USERNAME_COLOUR = ${USERNAME_COLOUR}
 PWD_COLOUR = ${PWD_COLOUR}
 
@@ -405,6 +495,8 @@ EOF
     echo "  Include GUI: ${INCLUDE_GUI}"
     echo "  Skip Packages: ${SKIP_PACKAGES}"
     echo "  Docker Mode: ${DOCKER_MODE}"
+    echo "  Package Target: ${PACKAGE_TARGET}"
+    echo "  Include Cockpit: ${INCLUDE_COCKPIT}"
     echo "  Extended Completions: ${EXTENDED_COMPLETIONS}"
     echo "  Extended Home Files: ${EXTENDED_HOME_FILES}"
     if [[ -n "${HOSTNAME_COLOUR}" ]]; then

@@ -29,7 +29,7 @@ Add this to the "Installation" section:
 ### Using the Build System (Recommended)
 
 ```bash
-./configure
+./configure --package-target=host
 make
 sudo make install
 ```

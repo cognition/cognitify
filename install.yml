@@ -17,6 +17,9 @@
 #   username_colour: Set default username colour (optional)
 #   pwd_colour: Set default PWD colour (optional)
 #   colour_profile: Set colour profile - use 'random' to randomly select from colour-combos.md
+#   additional_package_lists: Extra package files under src/packages/ (default: []).
+#     GENERAL is always included. Example: COCKPIT → parses src/packages/COCKPIT.
+#     JSON extra vars: -e '{"additional_package_lists": ["COCKPIT"]}'
 
 - name: Install Cognitify
   hosts: all
@@ -47,6 +50,7 @@
     bin_src: "{{ src_dir }}/usr/local/bin"
     profile_d_src: "{{ src_dir }}/profile.d"
     distro_files_src: "{{ src_dir }}/distro-files"
+    additional_package_lists: []
 
   tasks:
     - name: Detect package manager
@@ -72,10 +76,11 @@
       register: general_packages_output
       changed_when: false
       when: not skip_packages | bool
+      delegate_to: localhost
 
     - name: Set GENERAL packages fact
       set_fact:
-        general_packages: "{{ general_packages_output.stdout_lines | select('length') | list }}"
+        general_packages: "{{ general_packages_output.stdout_lines | default([]) | map('trim') | reject('equalto', '') | list }}"
       when: not skip_packages | bool
 
     - name: Parse YUM packages file
@@ -92,17 +97,44 @@
       when:
         - not skip_packages | bool
         - pkg_manager in ['yum', 'dnf']
+      delegate_to: localhost
 
     - name: Set YUM packages fact
       set_fact:
-        yum_packages: "{{ yum_packages_output.stdout_lines | select('length') | list }}"
+        yum_packages: "{{ yum_packages_output.stdout_lines | default([]) | map('trim') | reject('equalto', '') | list }}"
       when:
         - not skip_packages | bool
         - pkg_manager in ['yum', 'dnf']
 
+    - name: Parse additional package list files
+      shell: |
+        awk 'NF && $1 !~ /^#/ {
+          for (i = 1; i <= NF; ++i) {
+            if ($i !~ /^#/) {
+              print $i
+            }
+          }
+        }' "{{ packages_dir }}/{{ cognitify_extra_pkg_basename }}"
+      register: additional_packages_parse
+      changed_when: false
+      when:
+        - not skip_packages | bool
+        - additional_package_lists | length > 0
+      loop: "{{ additional_package_lists }}"
+      loop_control:
+        loop_var: cognitify_extra_pkg_basename
+      delegate_to: localhost
+
+    - name: Set additional packages fact
+      set_fact:
+        additional_packages: "{{ additional_packages_parse.results | map(attribute='stdout_lines') | list | flatten | map('trim') | reject('equalto', '') | list }}"
+      when:
+        - not skip_packages | bool
+        - additional_package_lists | length > 0
+
     - name: Combine packages list
       set_fact:
-        packages_to_install: "{{ (general_packages | default([])) + (yum_packages | default([])) | unique | list }}"
+        packages_to_install: "{{ (general_packages | default([])) + (yum_packages | default([])) + (additional_packages | default([])) | unique | list }}"
       when: not skip_packages | bool
 
     - name: Install packages
@@ -134,6 +166,7 @@
       register: random_colour_output
       changed_when: false
       when: colour_profile == "random"
+      delegate_to: localhost
 
     - name: Set random colour variables
       set_fact:
@@ -146,7 +179,7 @@
         - random_colour_output.stdout | length > 0
 
     - name: Get user home directory
-      shell: getent passwd "{{ install_user }}" | cut -d: -f6
+      shell: 'getent passwd "{{ install_user }}" | cut -d: -f6'
       register: user_home_output
       changed_when: false
       failed_when: false
@@ -220,6 +253,7 @@
       stat:
         path: "{{ prompts_src }}"
       register: prompts_src_stat
+      delegate_to: localhost
 
     - name: Create prompts directory
       file:
@@ -237,6 +271,7 @@
         excludes: "lib"
       register: prompt_files
       when: prompts_src_stat.stat.exists
+      delegate_to: localhost
 
     - name: Install prompt files
       copy:
@@ -255,6 +290,7 @@
         path: "{{ prompts_src }}/lib"
       register: prompts_lib_stat
       when: prompts_src_stat.stat.exists
+      delegate_to: localhost
 
     - name: Find prompt library files
       find:
@@ -265,6 +301,7 @@
         - prompts_src_stat.stat.exists
         - prompts_lib_stat.stat.exists is defined
         - prompts_lib_stat.stat.exists
+      delegate_to: localhost
 
     - name: Create prompts lib directory
       file:
@@ -336,6 +373,7 @@
       stat:
         path: "{{ completions_src }}"
       register: completions_src_stat
+      delegate_to: localhost
 
     - name: Create completions directory
       file:
@@ -350,6 +388,7 @@
         file_type: file
       register: completion_files
       when: completions_src_stat.stat.exists
+      delegate_to: localhost
 
     - name: Install shell completions
       copy:
@@ -365,6 +404,7 @@
       stat:
         path: "{{ home_files_src }}"
       register: home_files_src_stat
+      delegate_to: localhost
 
     - name: Find home files
       find:
@@ -372,6 +412,7 @@
         file_type: file
       register: home_files
       when: home_files_src_stat.stat.exists
+      delegate_to: localhost
 
     - name: Backup existing dotfiles
       copy:
@@ -380,6 +421,9 @@
         remote_src: yes
       loop: "{{ home_files.files | default([]) }}"
       when:
+        - not install_all_users | bool
+        - user_home is defined
+        - user_home | length > 0
         - home_files_src_stat.stat.exists
         - home_files.files | length > 0
       ignore_errors: yes
@@ -422,22 +466,24 @@
 
     - name: Install dotfiles for all users
       block:
-        - name: Install dotfiles for all users
+        - name: Install dotfiles for all users (per account)
           include_tasks: install-user-files.yml
           vars:
-            target_user: "{{ item.key }}"
-            user_home: "{{ item.value[4] }}"
-            user_uid: "{{ item.value[1] | int }}"
-            user_shell: "{{ item.value[5] }}"
+            target_user: "{{ cognitify_passwd_entry.key }}"
+            user_home: "{{ cognitify_passwd_entry.value[4] }}"
+            user_uid: "{{ cognitify_passwd_entry.value[1] | int }}"
+            user_shell: "{{ cognitify_passwd_entry.value[5] }}"
             home_files_list: "{{ home_files.files | default([]) }}"
             hostname_colour: "{{ hostname_colour }}"
             username_colour: "{{ username_colour }}"
             pwd_colour: "{{ pwd_colour }}"
           loop: "{{ all_users.ansible_facts.getent_passwd | dict2items }}"
+          loop_control:
+            loop_var: cognitify_passwd_entry
           when:
-            - item.value[1] | int >= 1000 or item.key == "root"
-            - item.value[5] != "/usr/sbin/nologin" and item.value[5] != "/sbin/nologin" and item.value[5] != "/bin/false"
-            - item.value[4] | length > 0
+            - cognitify_passwd_entry.value[1] | int >= 1000 or cognitify_passwd_entry.key == "root"
+            - cognitify_passwd_entry.value[5] != "/usr/sbin/nologin" and cognitify_passwd_entry.value[5] != "/sbin/nologin" and cognitify_passwd_entry.value[5] != "/bin/false"
+            - cognitify_passwd_entry.value[4] | length > 0
           ignore_errors: yes
 
         - name: Update .over-ride file for all users with colour settings
@@ -473,6 +519,7 @@
       stat:
         path: "{{ bin_src }}"
       register: bin_src_stat
+      delegate_to: localhost
 
     - name: Create bin directory
       file:
@@ -487,6 +534,7 @@
         file_type: file
       register: binary_files
       when: bin_src_stat.stat.exists
+      delegate_to: localhost
 
     - name: Install user binaries
       copy:
@@ -502,6 +550,7 @@
       stat:
         path: "{{ playbook_dir }}/docs"
       register: docs_dir_stat
+      delegate_to: localhost
 
     - name: Create documentation directory
       file:
@@ -521,6 +570,7 @@
       stat:
         path: "{{ playbook_dir }}/man/man1/cognitify.1"
       register: man_page_stat
+      delegate_to: localhost
 
     - name: Create man page directory
       file:
@@ -552,6 +602,7 @@
       stat:
         path: "{{ profile_d_src }}"
       register: profile_d_src_stat
+      delegate_to: localhost
 
     - name: Find profile.d files
       find:
@@ -559,6 +610,7 @@
         file_type: file
       register: profile_d_files
       when: profile_d_src_stat.stat.exists
+      delegate_to: localhost
 
     - name: Install profile.d snippets
       copy:
@@ -591,12 +643,14 @@
       stat:
         path: "{{ distro_files_src }}"
       register: distro_files_src_stat
+      delegate_to: localhost
 
     - name: Check if zypper.sh exists
       stat:
         path: "{{ distro_files_src }}/zypper.sh"
       register: zypper_sh_stat
       when: distro_files_src_stat.stat.exists
+      delegate_to: localhost
 
     - name: Install distro-specific files
       copy:

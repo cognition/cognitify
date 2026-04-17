@@ -30,3 +30,4 @@ config.mk
 *_REPORT.md
 
 
+ansible/inventory/hosts.ini

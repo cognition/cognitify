@@ -4,12 +4,14 @@
 
 - name: Install dotfiles for user {{ target_user }}
   copy:
-    src: "{{ item.path }}"
-    dest: "{{ user_home }}/.{{ item.path | basename }}"
+    src: "{{ cognitify_home_file.path }}"
+    dest: "{{ user_home }}/.{{ cognitify_home_file.path | basename }}"
     owner: "{{ target_user }}"
     group: "{{ target_user }}"
     mode: preserve
   loop: "{{ home_files_list }}"
+  loop_control:
+    loop_var: cognitify_home_file
   when: home_files_list | length > 0
 
 - name: Update .over-ride file for user {{ target_user }} with colour settings

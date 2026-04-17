@@ -45,6 +45,15 @@ ansible-playbook -i inventory install.yml -e "install_user=myuser"
 ansible-playbook -i inventory install.yml -e "skip_packages=true"
 ```
 
+### GENERAL plus optional lists (e.g. Cockpit)
+
+`GENERAL` is always read from `src/packages/GENERAL`. To add other files in `src/packages/` (such as `COCKPIT`), pass `additional_package_lists` as a JSON list:
+
+```bash
+ansible-playbook -i inventory install.yml \
+  -e '{"additional_package_lists": ["COCKPIT"]}'
+```
+
 ### Set Hostname Colour
 
 ```bash

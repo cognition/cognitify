@@ -11,12 +11,8 @@ zip
 expect
 curl
 wget
-hwinfo
 jq
-fq
 dos2unix
 vim
-xclip
 openssl
-pwgen
 rsync

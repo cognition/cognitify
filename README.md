@@ -1,41 +1,71 @@
 # Cognitify
 
-Cognitify is a set of Linux shell customisations packaged for easy reuse across systems. It ships with shared `/etc/bash.bashrc.d` fragments, isolated prompt configuration files, user-level dotfiles, completions for common CLI tools, and curated package lists for yum/dnf-based distributions.
+Cognitify is a small set of **Bash** customisations you can drop onto a Linux host: a shared **environment** script (history, `PATH`, coloured prompt) and **home-directory** templates (`.bashrc`, overrides, Git, Vim, logout).
 
-## What's in the box
+## Layout
 
-- **Bash runtime fragments** (`src/bash.bashrc.d`): prompt, environment, alias, and function snippets intended for `/etc/bash.bashrc.d`.
-- **User dotfiles** (`src/home-files`): templates for `.bashrc`, `.bash_logout`, `.gitconfig`, `.vimrc`, and other helpful defaults.
-- **Shell completions** (`src/completions`): upstream completion files for tools such as `kubectl`, `helm`, `terraform`, `nerdctl`, and more.
-- **Package manifests** (`src/packages`): general CLI and GUI package sets plus package-manager-specific add-ons for apt, yum/dnf, and zypper.
-- **Installer** (`bin/install.sh`): bootstraps packages, installs system-wide Bash configuration, copies completions, and syncs dotfiles for the chosen user.
+| Path | Role |
+|------|------|
+| `src/etc/environment` | Interactive-shell entrypoint: history, `PATH`, restricted colour palette, prompt. Intended for **`/etc/environment`** (see below). |
+| `src/home-files/bashrc` | Sources `/etc/environment`, then `~/.over-ride`, then applies the prompt; adds a minimal alias set. |
+| `src/home-files/over-ride` | Per-user colour overrides (quote `export` values, e.g. `export OVERRIDE_HOSTNAME_COLOUR="${OLIVE}"`). |
+| `src/home-files/gitconfig` | Template Git user config (edit placeholders before use). |
+| `src/home-files/bash_logout` | Logout hook. |
+| `src/home-files/vimrc` | Minimal Vim defaults. |
 
-## Installation
+The prompt colours are driven by named variables defined in `src/etc/environment` (for example `OLIVE`, `AZURE`, `LT_BLUE`, `ROOT_RED`). Override them from `~/.over-ride` after the environment file has been sourced.
 
-Run the installer as root (or via `sudo`) from the repository root:
+**Path note:** `~/.bashrc` sources **`/etc/environment`** (lowercase). Install `src/etc/environment` to that path, or adjust `ENVIRONMENT_FILE` in `.bashrc` if your site uses a different file (for example `/etc/Environment`).
+
+## Quick install (manual)
+
+As root (or with `sudo`), install the system file:
 
 ```bash
-sudo bin/install.sh [--user <name>] [--include-gui] [--skip-packages]
+sudo install -m 0644 src/etc/environment /etc/environment
 ```
 
-Flags:
+Then copy home templates into your account (back up any existing files first):
 
-- `--user <name>`: install dotfiles for a specific user (defaults to `SUDO_USER` or the invoking user).
-- `--include-gui`: include optional GUI tools from `src/packages/GENERAL_GUI` when installing packages.
-- `--skip-packages`: skip package installation entirely.
+```bash
+cp src/home-files/bashrc ~/.bashrc
+cp src/home-files/over-ride ~/.over-ride
+cp src/home-files/gitconfig ~/.gitconfig
+cp src/home-files/bash_logout ~/.bash_logout
+cp src/home-files/vimrc ~/.vimrc
+```
 
-What the installer does:
+Edit `~/.gitconfig` and `~/.over-ride` for your name, email, and colours. Open a new interactive shell to pick up changes.
 
-1. Detects a supported package manager (apt, yum, dnf, or zypper) and installs packages defined in `src/packages/GENERAL`, the distro-specific manifest, and optional GUI packages. Fully supports RHEL (Red Hat Enterprise Linux).
-2. Creates (or reuses) the `cognitify` group, adds the target user to it, and installs `/etc/bash.bashrc.d` fragments with `root:cognitify` ownership.
-3. Copies completions into `/etc/bash_completion.d`.
-4. Copies dotfiles into the target user's home directory, backing up any existing files to `.orig` once.
+## Tarball
 
-After `/etc/bash.bashrc.d` is in place, a user may rerun `make install-home` for their own account without `sudo`. Root is still required for `ALL=1` or when installing dotfiles for another user.
+A ready-made archive with `home/` and `etc/` at the top level is built as:
+
+**`dist/cognitify-home-etc.tar.gz`**
+
+Contents:
+
+- `home/.bashrc`, `home/.over-ride`, `home/.gitconfig`, `home/.bash_logout`, `home/.vimrc`
+- `etc/environment`
+
+Extract and merge into your system, for example:
+
+```bash
+tar -xzf dist/cognitify-home-etc.tar.gz -C /tmp/cognitify-stage
+sudo install -m 0644 /tmp/cognitify-stage/etc/environment /etc/environment
+cp /tmp/cognitify-stage/home/.bashrc ~/
+# … copy the rest of home/ as needed
+```
+
+Tarballs match `*.tar.gz` in `.gitignore`; regenerate locally if the file is missing.
+
+## Full installer (optional)
+
+For a complete Cognitify deployment (packages, completions, `/etc/bash.bashrc.d`, and so on), use **`sudo bin/install.sh`** or **`./configure` then `sudo make install`** as described in `BUILD.md`. That path expects the full `src/` tree (including `bash.bashrc.d`, `completions`, `packages`, etc.). If you only maintain the minimal tree above, prefer the manual or tarball flow.
 
 ## Maintenance
 
-- Repository version is tracked in `version` and release notes live in `changelog/`.
-- Place machine- or user-specific overrides inside `private/` to keep them out of source control.
+- Version: `version`; notes: `changelog`.
+- Machine-specific or private material: `private/` (not tracked the same way as the rest of the tree—see `private/README.md` if present).
 
 (c) 2026 Ramon Brooker <rbrooker@aeo3.io>

@@ -1,6 +1,0 @@
-# Cockpit (web console) — optional; not part of GENERAL / GENERAL DOCKER / GENERAL_GUI.
-# Enable with: ./configure ... --include-cockpit   or   sudo make post-install-cockpit
-# (c) 2026 Ramon Brooker <rbrooker@aeo3.io>
-
-cockpit
-cockpit-bridge

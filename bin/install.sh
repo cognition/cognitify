@@ -8,10 +8,12 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SRC_DIR="$ROOT_DIR/src"
 CONFIG_SRC="$SRC_DIR/bash.bashrc.d"
 HOME_FILES_SRC="$SRC_DIR/home-files"
+ETC_SRC="$SRC_DIR/etc"
 COMPLETIONS_SRC="$SRC_DIR/completions"
 PACKAGES_DIR="$SRC_DIR/packages"
 
 CONFIG_DEST="/etc/bash.bashrc.d"
+ENVIRONMENT_DEST="/etc/Environment"
 COMPLETIONS_DEST="/etc/bash_completion.d"
 GROUP_NAME="cognitify"
 TARGET_USER="${SUDO_USER:-${USER}}"
@@ -74,7 +76,7 @@ parse_args() {
 }
 
 assert_paths() {
-    for path in "$CONFIG_SRC" "$HOME_FILES_SRC" "$COMPLETIONS_SRC"; do
+    for path in "$CONFIG_SRC" "$HOME_FILES_SRC" "$COMPLETIONS_SRC" "$ETC_SRC"; do
         if [[ ! -d $path ]]; then
             error "Required directory missing: $path"
             exit 1
@@ -189,6 +191,16 @@ install_configs() {
     log "Installed bash configuration into $CONFIG_DEST"
 }
 
+install_environment() {
+    if [[ -f "${ETC_SRC}/Environment" ]]; then
+        install -m 644 "${ETC_SRC}/Environment" "${ENVIRONMENT_DEST}"
+        chown root:root "${ENVIRONMENT_DEST}" 2>/dev/null || true
+        log "Installed environment file into ${ENVIRONMENT_DEST}"
+    else
+        log "Environment file not found at ${ETC_SRC}/Environment; skipping."
+    fi
+}
+
 install_completions() {
     install -d -m 755 "$COMPLETIONS_DEST"
     find "$COMPLETIONS_SRC" -maxdepth 1 -type f -print0 | while IFS= read -r -d '' file; do
@@ -228,6 +240,7 @@ main() {
     ensure_group
     ensure_user_in_group
     install_configs
+    install_environment
     install_completions
     install_home_files
     log "Installation completed successfully."

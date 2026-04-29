@@ -1,21 +1,35 @@
 ## (c) 2026
 ## Ramon Brooker <rbrooker@aeo3.io>
 
-BASE_PATH="/etc/bash.bashrc.d"
+ENVIRONMENT_FILE="/etc/Environment"
 
-if [[ -f ~/.over-ride ]]; then
-	source ~/.over-ride
-fi
-
-
-# shellcheck source=/dev/null
-if [[ -f ${BASE_PATH}/bashrc_file ]]; then
-    source ${BASE_PATH}/bashrc_file
-fi
-
+case $- in
+    *i*) ;;
+    *) return ;;
+esac
 
 # shellcheck source=/dev/null
-if [[ -f ${BASE_PATH}/last-line ]]; then
-    source ${BASE_PATH}/last-line
+if [[ -f "${ENVIRONMENT_FILE}" ]]; then
+    source "${ENVIRONMENT_FILE}"
 fi
+
+if [[ -f "${HOME}/.over-ride" ]]; then
+    # shellcheck source=/dev/null
+    source "${HOME}/.over-ride"
+fi
+
+## Minimal alias subset.
+if command -v ls >/dev/null 2>&1; then
+    alias ls="ls --color=auto"
+    alias ll="ls -alhF --color=auto"
+    alias la="ls -A --color=auto"
+fi
+
+if command -v grep >/dev/null 2>&1; then
+    alias grep="grep --color=auto"
+fi
+
+alias ..="cd ../"
+alias clean="clear"
+alias rebash="source \"${HOME}/.bashrc\""
 

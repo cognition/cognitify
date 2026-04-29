@@ -28,6 +28,8 @@ BIN_SRC ?= $(SRC_DIR)/usr/local/bin
 DISTRO_FILES_SRC ?= $(SRC_DIR)/distro-files
 PROFILE_D_SRC ?= $(SRC_DIR)/profile.d
 PROFILE_D_DEST ?= $(ETC_DIR)/profile.d
+ETC_FILES_SRC ?= $(SRC_DIR)/etc
+ENVIRONMENT_DEST ?= $(ETC_DIR)/Environment
 SKEL_DEST ?= $(ETC_DIR)/skel
 NEOVIM_CONFIG_SRC ?= $(SRC_DIR)/config/nvim
 DOCKER_MODE ?= no
@@ -52,7 +54,7 @@ GREEN := \033[0;32m
 YELLOW := \033[0;33m
 NC := \033[0m # No Colour
 
-.PHONY: help all install install-root install-all install-config install-completions install-home install-bin install-docs install-man install-distro install-profile-d install-skel install-neovim-config post-install post-install-cockpit clean uninstall check-root
+.PHONY: help all install install-root install-all install-config install-environment install-completions install-home install-bin install-docs install-man install-distro install-profile-d install-skel install-neovim-config post-install post-install-cockpit clean uninstall check-root
 
 help: ## Show this help message
 	@echo "Cognitify Build System"
@@ -86,7 +88,7 @@ check-root: ## Check if running as root (for install targets)
 		exit 1; \
 	fi
 
-install: check-root all install-config install-completions install-home install-bin install-distro install-docs install-man install-profile-d install-skel post-install install-neovim-config ## Install all components
+install: check-root all install-config install-environment install-completions install-home install-bin install-distro install-docs install-man install-profile-d install-skel post-install install-neovim-config ## Install all components
 	@echo ""
 	@echo "$(GREEN)[cognitify]$(NC) Installation completed successfully!"
 	@echo "$(GREEN)[cognitify]$(NC) Version $(VERSION) installed"
@@ -121,6 +123,16 @@ install-config: check-root ## Install bash configuration files
 	@echo "$(CONFIG_DEST)/.cognitify-version" | xargs -I {} sh -c 'echo "$(VERSION)" > {}'
 	@chmod 644 "$(CONFIG_DEST)/.cognitify-version"
 	@echo "$(GREEN)[cognitify]$(NC) Configuration installed to $(CONFIG_DEST)"
+
+install-environment: check-root ## Install /etc/Environment file
+	@echo "$(GREEN)[cognitify]$(NC) Installing environment file..."
+	@if [ ! -f "$(ETC_FILES_SRC)/Environment" ]; then \
+		echo "$(YELLOW)Warning: Environment source not found: $(ETC_FILES_SRC)/Environment$(NC)" >&2; \
+		exit 0; \
+	fi
+	@install -m 644 "$(ETC_FILES_SRC)/Environment" "$(ENVIRONMENT_DEST)"
+	@chown root:root "$(ENVIRONMENT_DEST)" 2>/dev/null || true
+	@echo "$(GREEN)[cognitify]$(NC) Environment installed to $(ENVIRONMENT_DEST)"
 
 install-prompts: check-root ## Install prompt configuration files
 	@echo "$(GREEN)[cognitify]$(NC) Installing prompt files..."

@@ -1,7 +1,0 @@
-# Debian/Ubuntu specific packages
-# Package names that differ from other distributions or are specific to apt-get
-# (c) 2026 Ramon Brooker <rbrooker@aeo3.io>
-
-openssh-server
-shellcheck
-libsqlite3-dev

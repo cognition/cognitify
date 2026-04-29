@@ -29,5 +29,6 @@ config.mk
 # Report files
 *_REPORT.md
 
+prompt_screenshots/
 
 ansible/inventory/hosts.ini

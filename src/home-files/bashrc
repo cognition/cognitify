@@ -18,6 +18,10 @@ if [[ -f "${HOME}/.over-ride" ]]; then
     source "${HOME}/.over-ride"
 fi
 
+if declare -F _cognitify_apply_prompt >/dev/null 2>&1; then
+    _cognitify_apply_prompt
+fi
+
 ## Minimal alias subset.
 if command -v ls >/dev/null 2>&1; then
     alias ls="ls --color=auto"

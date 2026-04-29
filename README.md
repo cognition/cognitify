@@ -1,71 +1,89 @@
-# Cognitify
+# Cognitify Enterprisy Version
 
-Cognitify is a small set of **Bash** customisations you can drop onto a Linux host: a shared **environment** script (history, `PATH`, coloured prompt) and **home-directory** templates (`.bashrc`, overrides, Git, Vim, logout).
+Minimal **Bash** and **Vim** dotfiles plus a single system-wide **environment** script: history, `PATH`, a coloured prompt, and a small set of named colours you can override per user.
 
-## Layout
+Version is recorded in `version`.
 
-| Path | Role |
-|------|------|
-| `src/etc/environment` | Interactive-shell entrypoint: history, `PATH`, restricted colour palette, prompt. Intended for **`/etc/environment`** (see below). |
-| `src/home-files/bashrc` | Sources `/etc/environment`, then `~/.over-ride`, then applies the prompt; adds a minimal alias set. |
-| `src/home-files/over-ride` | Per-user colour overrides (quote `export` values, e.g. `export OVERRIDE_HOSTNAME_COLOUR="${OLIVE}"`). |
-| `src/home-files/gitconfig` | Template Git user config (edit placeholders before use). |
-| `src/home-files/bash_logout` | Logout hook. |
-| `src/home-files/vimrc` | Minimal Vim defaults. |
+## Repository layout
 
-The prompt colours are driven by named variables defined in `src/etc/environment` (for example `OLIVE`, `AZURE`, `LT_BLUE`, `ROOT_RED`). Override them from `~/.over-ride` after the environment file has been sourced.
+```
+cognitify/
+├── .gitignore
+├── README.md
+├── version
+├── dist/
+│   └── cognitify-home-etc.tar.gz   # optional bundle (see below)
+└── src/
+    ├── etc/
+    │   └── environment             # install as /etc/environment (see note)
+    └── home-files/
+        ├── bash_logout
+        ├── bashrc
+        ├── gitconfig
+        ├── over-ride
+        └── vimrc
+```
 
-**Path note:** `~/.bashrc` sources **`/etc/environment`** (lowercase). Install `src/etc/environment` to that path, or adjust `ENVIRONMENT_FILE` in `.bashrc` if your site uses a different file (for example `/etc/Environment`).
 
-## Quick install (manual)
+| File                         | Purpose                                                                                                                |
+| ---------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `src/etc/environment`        | Sourced for interactive shells: `shopt`/history, `PATH`, colour names, `_cognitify_apply_prompt`, `PS1`.               |
+| `src/home-files/bashrc`      | Sources `/etc/environment`, then `~/.over-ride`, reapplies the prompt, defines a few aliases.                          |
+| `src/home-files/over-ride`   | Per-user exports (e.g. `export OVERRIDE_HOSTNAME_COLOUR="${OLIVE}"` — **quote** values that contain escape sequences). |
+| `src/home-files/gitconfig`   | Git template; replace placeholders before use.                                                                         |
+| `src/home-files/bash_logout` | Logout script.                                                                                                         |
+| `src/home-files/vimrc`       | Vim configuration.                                                                                                     |
 
-As root (or with `sudo`), install the system file:
+
+**System path:** `bashrc` uses `ENVIRONMENT_FILE="/etc/environment"`. Install the repo file as that path (lowercase), or change `ENVIRONMENT_FILE` in your `~/.bashrc` if your distribution uses another file.
+
+## Install
+
+### 1. System environment (root)
 
 ```bash
 sudo install -m 0644 src/etc/environment /etc/environment
 ```
 
-Then copy home templates into your account (back up any existing files first):
+### 2. Home directory (your user)
+
+Copy each template to `$HOME` with a leading dot:
 
 ```bash
-cp src/home-files/bashrc ~/.bashrc
-cp src/home-files/over-ride ~/.over-ride
-cp src/home-files/gitconfig ~/.gitconfig
-cp src/home-files/bash_logout ~/.bash_logout
-cp src/home-files/vimrc ~/.vimrc
+for f in src/home-files/*; do
+  cp "$f" "$HOME/.$(basename "$f")"
+done
 ```
 
-Edit `~/.gitconfig` and `~/.over-ride` for your name, email, and colours. Open a new interactive shell to pick up changes.
-
-## Tarball
-
-A ready-made archive with `home/` and `etc/` at the top level is built as:
-
-**`dist/cognitify-home-etc.tar.gz`**
-
-Contents:
-
-- `home/.bashrc`, `home/.over-ride`, `home/.gitconfig`, `home/.bash_logout`, `home/.vimrc`
-- `etc/environment`
-
-Extract and merge into your system, for example:
+Or unpack `**dist/cognitify-home-etc.tar.gz**`, which contains `home/.bashrc`, `home/.over-ride`, and the rest under `home/`, plus `etc/environment`:
 
 ```bash
 tar -xzf dist/cognitify-home-etc.tar.gz -C /tmp/cognitify-stage
 sudo install -m 0644 /tmp/cognitify-stage/etc/environment /etc/environment
-cp /tmp/cognitify-stage/home/.bashrc ~/
-# … copy the rest of home/ as needed
+cp /tmp/cognitify-stage/home/.??* "$HOME/"
 ```
 
-Tarballs match `*.tar.gz` in `.gitignore`; regenerate locally if the file is missing.
+Edit `~/.gitconfig` and `~/.over-ride` as needed, then open a **new interactive** Bash session.
 
-## Full installer (optional)
+### Tarball and git
 
-For a complete Cognitify deployment (packages, completions, `/etc/bash.bashrc.d`, and so on), use **`sudo bin/install.sh`** or **`./configure` then `sudo make install`** as described in `BUILD.md`. That path expects the full `src/` tree (including `bash.bashrc.d`, `completions`, `packages`, etc.). If you only maintain the minimal tree above, prefer the manual or tarball flow.
+`*.tar.gz` is listed in `.gitignore`; the archive under `dist/` may be present locally but not committed. Regenerate it from the current `src/` tree when you need a fresh bundle:
+
+```bash
+mkdir -p dist stage/home stage/etc
+cp src/home-files/bashrc stage/home/.bashrc
+cp src/home-files/over-ride stage/home/.over-ride
+cp src/home-files/gitconfig stage/home/.gitconfig
+cp src/home-files/bash_logout stage/home/.bash_logout
+cp src/home-files/vimrc stage/home/.vimrc
+cp src/etc/environment stage/etc/environment
+tar -czf dist/cognitify-home-etc.tar.gz -C stage home etc
+rm -rf stage
+```
 
 ## Maintenance
 
-- Version: `version`; notes: `changelog`.
-- Machine-specific or private material: `private/` (not tracked the same way as the rest of the tree—see `private/README.md` if present).
+- Bump `version` when you cut a release or meaningful change.
+- `private/` and similar paths are ignored by `.gitignore` for local-only material.
 
-(c) 2026 Ramon Brooker <rbrooker@aeo3.io>
+(c) 2026 Ramon Brooker [rbrooker@aeo3.io](mailto:rbrooker@aeo3.io)

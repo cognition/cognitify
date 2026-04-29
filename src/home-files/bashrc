@@ -1,7 +1,7 @@
 ## (c) 2026
 ## Ramon Brooker <rbrooker@aeo3.io>
 
-ENVIRONMENT_FILE="/etc/Environment"
+ENVIRONMENT_FILE="/etc/environment"
 
 case $- in
     *i*) ;;

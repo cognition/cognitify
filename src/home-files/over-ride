@@ -17,36 +17,13 @@
 # ROOT_RED
 # OLIVE
 
-# NC
-# BOLD
-
 # Override Colour System Specific --  Default
-# export OVERRIDE_SQUARE_BRACKETS=${GRAY}
-# export OVERRIDE_HOSTNAME_COLOUR=${AZURE}
-# export OVERRIDE_USERNAME_COLOUR=${AZURE}
-# export OVERRIDE_PWD_COLOUR=${LT_BLUE}
-# export HOSTNAME_NUMBER=2
 # export OVERRIDE_SQUARE_BRACKETS=${GRAY}
 
 export OVERRIDE_HOSTNAME_COLOUR="${OLIVE}"
 export OVERRIDE_USERNAME_COLOUR="${AZURE}"
 export OVERRIDE_PWD_COLOUR="${LT_BLUE}"
 
-## You can customise your prompt using these
-# OVERRIDE_HOSTNAME_COLOUR
-# OVERRIDE_USERNAME_COLOUR
-# OVERRIDE_PWD_COLOUR
 
-export SCRIPT_SIGNATURE_BLOCK=$(cat <<EOF
-#!/bin/bash
-
-## (C) $(date +%Y) 
-## $FIRST_NAME $LAST_NAME <$EMAIL>
-
-
-EOF
-)
-
-## Local Environment Values
 
 

@@ -25,9 +25,10 @@ The configure script detects your Linux distribution and sets up the build confi
 - `--prefix=DIR` - Installation prefix (default: `/usr/local`)
 - `--etc-dir=DIR` - System configuration directory (default: `/etc`)
 - `--user=USER` - User to install dotfiles for (default: current user)
-- `--package-target=PROFILE` - Package profile when installing packages: `host`, `docker`, or `gui` (required on normal hosts unless you use `--docker`, `--include-gui`, or `--skip-packages`; inside a container, `docker` is assumed if omitted)
+- `--package-target=PROFILE` - Package profile when installing packages: `host`, `docker`, `gui`, or `wsl` (required on normal hosts unless you use `--docker`, `--include-gui`, `--wsl`, or `--skip-packages`; inside a container, `docker` is assumed if omitted; on WSL, `wsl` is assumed if omitted)
 - `--include-gui` - Same as `--package-target=gui`
 - `--docker` - Same as `--package-target=docker`
+- `--wsl` - Same as `--package-target=wsl` (user-local install, no packages or Cockpit)
 - `--include-cockpit` - Add Cockpit packages (`src/packages/COCKPIT`)
 - `--skip-packages` - Skip package installation
 - `--help` - Show help message
@@ -42,6 +43,10 @@ The configure script detects your Linux distribution and sets up the build confi
 
 # Install with GUI packages
 ./configure --include-gui
+
+# WSL user-local install (no sudo, no Cockpit)
+./configure --package-target=wsl
+make install
 
 # Install to custom prefix
 ./configure --prefix=/usr --package-target=host
@@ -59,7 +64,8 @@ You can also set these via environment variables:
 - `ETC_DIR` - System configuration directory
 - `INSTALL_USER` - User for dotfiles installation
 - `INCLUDE_GUI` - Set to `yes` to include GUI packages
-- `PACKAGE_TARGET` - `host`, `docker`, or `gui`
+- `PACKAGE_TARGET` - `host`, `docker`, `gui`, or `wsl`
+- `WSL_MODE` - Set to `yes` for WSL user-local install
 - `INCLUDE_COCKPIT` - Set to `yes` to install Cockpit-related packages
 - `SKIP_PACKAGES` - Set to `yes` to skip package installation
 

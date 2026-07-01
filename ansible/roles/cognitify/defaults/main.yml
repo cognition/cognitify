@@ -48,7 +48,7 @@ cognitify_install_user: "{{ ansible_user | default(ansible_user_id | default('ro
 # When true, passes --skip-packages (no distro package installs from post-install)
 cognitify_skip_packages: false
 
-# host | docker | gui — ignored when cognitify_skip_packages is true
+# host | docker | gui | wsl — ignored when cognitify_skip_packages is true
 cognitify_package_target: host
 
 cognitify_include_cockpit: false

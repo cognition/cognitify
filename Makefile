@@ -31,6 +31,7 @@ PROFILE_D_DEST ?= $(ETC_DIR)/profile.d
 SKEL_DEST ?= $(ETC_DIR)/skel
 NEOVIM_CONFIG_SRC ?= $(SRC_DIR)/config/nvim
 DOCKER_MODE ?= no
+WSL_MODE ?= no
 INCLUDE_COCKPIT ?= no
 HOSTNAME_COLOUR ?=
 USERNAME_COLOUR ?=
@@ -52,7 +53,7 @@ GREEN := \033[0;32m
 YELLOW := \033[0;33m
 NC := \033[0m # No Colour
 
-.PHONY: help all install install-root install-all install-config install-completions install-home install-bin install-docs install-man install-distro install-profile-d install-skel install-neovim-config post-install post-install-cockpit clean uninstall check-root
+.PHONY: help all install install-root install-all install-system install-wsl install-config install-completions install-home install-bin install-docs install-man install-distro install-profile-d install-skel install-neovim-config post-install post-install-cockpit clean uninstall check-root
 
 help: ## Show this help message
 	@echo "Cognitify Build System"
@@ -67,6 +68,7 @@ help: ## Show this help message
 	@echo "  Config Dest: $(CONFIG_DEST)"
 	@echo "  Install User: $(INSTALL_USER)"
 	@echo "  Package Target: $(PACKAGE_TARGET)"
+	@echo "  WSL Mode: $(WSL_MODE)"
 	@echo "  Include Cockpit Packages: $(INCLUDE_COCKPIT)"
 
 all: ## Build the project (currently just validates)
@@ -86,7 +88,14 @@ check-root: ## Check if running as root (for install targets)
 		exit 1; \
 	fi
 
-install: check-root all install-config install-completions install-home install-bin install-distro install-docs install-man install-profile-d install-skel post-install install-neovim-config ## Install all components
+install: all ## Install all components (system-wide or WSL user-local per config)
+ifeq ($(WSL_MODE),yes)
+	@$(MAKE) install-wsl
+else
+	@$(MAKE) install-system
+endif
+
+install-system: check-root install-config install-completions install-home install-bin install-distro install-docs install-man install-profile-d install-skel post-install install-neovim-config ## System-wide install (requires root)
 	@echo ""
 	@echo "$(GREEN)[cognitify]$(NC) Installation completed successfully!"
 	@echo "$(GREEN)[cognitify]$(NC) Version $(VERSION) installed"
@@ -96,6 +105,14 @@ install: check-root all install-config install-completions install-home install-
 		echo "$(GREEN)[cognitify]$(NC) Installed for user: $(INSTALL_USER)"; \
 	fi
 	@echo "$(GREEN)[cognitify]$(NC) Please log out and log back in for changes to take effect"
+
+install-wsl: all ## Install user-local WSL configuration (no root, no Cockpit)
+	@echo "$(GREEN)[cognitify]$(NC) Installing for WSL (user-local)..."
+	@./bin/install-wsl.sh --user "$(INSTALL_USER)"
+	@echo ""
+	@echo "$(GREEN)[cognitify]$(NC) WSL installation completed successfully!"
+	@echo "$(GREEN)[cognitify]$(NC) Version $(VERSION) installed for user: $(INSTALL_USER)"
+	@echo "$(GREEN)[cognitify]$(NC) Open a new interactive Bash session for changes to take effect"
 
 install-root: ## Install for root user (alias for: make install ROOT=1)
 	$(MAKE) install ROOT=1

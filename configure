@@ -13,6 +13,7 @@ INCLUDE_GUI="${INCLUDE_GUI:-no}"
 SKIP_PACKAGES="${SKIP_PACKAGES:-no}"
 DOCKER_MODE="${DOCKER_MODE:-no}"
 PACKAGE_TARGET="${PACKAGE_TARGET:-}"
+WSL_MODE="${WSL_MODE:-no}"
 INCLUDE_COCKPIT="${INCLUDE_COCKPIT:-no}"
 EXTENDED_COMPLETIONS="${EXTENDED_COMPLETIONS:-no}"
 EXTENDED_HOME_FILES="${EXTENDED_HOME_FILES:-no}"
@@ -31,6 +32,17 @@ detect_docker() {
        [[ -n "${container:-}" ]] || \
        [[ -f /proc/1/cgroup ]] && grep -qa docker /proc/1/cgroup 2>/dev/null || \
        [[ -f /proc/1/cgroup ]] && grep -qa kubepods /proc/1/cgroup 2>/dev/null; then
+        return 0
+    fi
+    return 1
+}
+
+# Detect Windows Subsystem for Linux
+detect_wsl() {
+    if [[ -n "${WSL_DISTRO_NAME:-}" ]]; then
+        return 0
+    fi
+    if [[ -r /proc/version ]] && grep -qiE 'microsoft|wsl' /proc/version; then
         return 0
     fi
     return 1
@@ -117,7 +129,12 @@ finalize_package_target() {
     fi
 
     if [[ "$INCLUDE_GUI" == "yes" && "$DOCKER_MODE" == "yes" ]]; then
-        echo "Error: GUI and Docker package lists cannot be combined. Use --package-target=host|docker|gui." >&2
+        echo "Error: GUI and Docker package lists cannot be combined. Use --package-target=host|docker|gui|wsl." >&2
+        exit 1
+    fi
+
+    if [[ "$PACKAGE_TARGET" == "wsl" && "$INCLUDE_COCKPIT" == "yes" ]]; then
+        echo "Error: Cockpit is not supported with --package-target=wsl." >&2
         exit 1
     fi
 
@@ -126,17 +143,27 @@ finalize_package_target() {
             host)
                 DOCKER_MODE="no"
                 INCLUDE_GUI="no"
+                WSL_MODE="no"
                 ;;
             docker)
                 DOCKER_MODE="yes"
                 INCLUDE_GUI="no"
+                WSL_MODE="no"
                 ;;
             gui)
                 DOCKER_MODE="no"
                 INCLUDE_GUI="yes"
+                WSL_MODE="no"
+                ;;
+            wsl)
+                WSL_MODE="yes"
+                SKIP_PACKAGES="yes"
+                DOCKER_MODE="no"
+                INCLUDE_GUI="no"
+                INCLUDE_COCKPIT="no"
                 ;;
             *)
-                echo "Error: Invalid --package-target='$PACKAGE_TARGET' (use host, docker, or gui)." >&2
+                echo "Error: Invalid --package-target='$PACKAGE_TARGET' (use host, docker, gui, or wsl)." >&2
                 exit 1
                 ;;
         esac
@@ -161,6 +188,16 @@ finalize_package_target() {
         return 0
     fi
 
+    if detect_wsl; then
+        WSL_MODE="yes"
+        PACKAGE_TARGET="wsl"
+        SKIP_PACKAGES="yes"
+        DOCKER_MODE="no"
+        INCLUDE_GUI="no"
+        INCLUDE_COCKPIT="no"
+        return 0
+    fi
+
     cat <<EOF >&2
 Error: Package installation is enabled but no package list profile was selected.
 
@@ -168,10 +205,12 @@ Choose exactly one of:
   --package-target=host    Standard systems (GENERAL package list)
   --package-target=docker  Containers and minimal hosts (GENERAL DOCKER list)
   --package-target=gui     Graphical workstations (GENERAL plus GENERAL_GUI)
+  --package-target=wsl     WSL user-local install (no packages, no Cockpit)
 
 Shorthand flags (equivalent to the above):
   --docker                 Same as --package-target=docker
   --include-gui            Same as --package-target=gui
+  --wsl                    Same as --package-target=wsl
 
 To install files without any packages:
   --skip-packages
@@ -227,6 +266,10 @@ parse_args() {
                 ;;
             --docker)
                 DOCKER_MODE="yes"
+                shift
+                ;;
+            --wsl)
+                PACKAGE_TARGET="wsl"
                 shift
                 ;;
             --package-target=*)
@@ -298,9 +341,11 @@ Options:
   --include-cockpit      Add Cockpit packages from src/packages/COCKPIT
   --skip-packages        Skip package installation
   --docker               Use Docker/container package list (same as --package-target=docker)
-  --package-target=PROFILE  Package profile when installing packages: host | docker | gui
+  --wsl                  WSL user-local install (same as --package-target=wsl)
+  --package-target=PROFILE  Package profile when installing packages: host | docker | gui | wsl
                           Required on normal hosts unless you pass --docker, --include-gui,
-                          or --skip-packages. Inside a container, docker is assumed if omitted.
+                          --wsl, or --skip-packages. Inside a container, docker is assumed
+                          if omitted. On WSL, wsl is assumed if omitted.
   --extended-completions Install extended completions (kubectl, helm, terraform, etc.)
   --extended-home-files Install extended home files (terraformrc, shellcheckrc, etc.)
   --hostname-colour=COLOUR Set default hostname colour (e.g., AZURE, BRIGHT_PINK, OLIVE)
@@ -319,7 +364,8 @@ Environment variables:
   INCLUDE_COCKPIT        Set to 'yes' to install Cockpit-related packages
   SKIP_PACKAGES          Set to 'yes' to skip package installation
   DOCKER_MODE            Set to 'yes' to use Docker/container mode
-  PACKAGE_TARGET         host | docker | gui (explicit package list selection)
+  PACKAGE_TARGET         host | docker | gui | wsl (explicit package list selection)
+  WSL_MODE               Set to 'yes' for WSL user-local install (no packages or Cockpit)
   EXTENDED_COMPLETIONS   Set to 'yes' to install extended completions
   EXTENDED_HOME_FILES    Set to 'yes' to install extended home files
   HOSTNAME_COLOUR        Set default hostname colour (e.g., AZURE, BRIGHT_PINK, OLIVE)
@@ -331,6 +377,8 @@ Environment variables:
 Examples:
   $0 --package-target=host
   $0 --package-target=host --include-cockpit
+  $0 --package-target=wsl
+  $0 --wsl
   $0 --prefix=/usr --include-gui
   $0 --user=john --skip-packages
   $0 --hostname-colour=AZURE
@@ -462,6 +510,7 @@ INCLUDE_GUI = ${INCLUDE_GUI}
 SKIP_PACKAGES = ${SKIP_PACKAGES}
 DOCKER_MODE = ${DOCKER_MODE}
 PACKAGE_TARGET = ${PACKAGE_TARGET}
+WSL_MODE = ${WSL_MODE}
 INCLUDE_COCKPIT = ${INCLUDE_COCKPIT}
 EXTENDED_COMPLETIONS = ${EXTENDED_COMPLETIONS}
 EXTENDED_HOME_FILES = ${EXTENDED_HOME_FILES}
@@ -496,6 +545,7 @@ EOF
     echo "  Skip Packages: ${SKIP_PACKAGES}"
     echo "  Docker Mode: ${DOCKER_MODE}"
     echo "  Package Target: ${PACKAGE_TARGET}"
+    echo "  WSL Mode: ${WSL_MODE}"
     echo "  Include Cockpit: ${INCLUDE_COCKPIT}"
     echo "  Extended Completions: ${EXTENDED_COMPLETIONS}"
     echo "  Extended Home Files: ${EXTENDED_HOME_FILES}"

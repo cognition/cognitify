@@ -44,6 +44,15 @@ WSL installs are **user-local** (no `sudo`) and do **not** include Cockpit, pack
 bin/install-wsl.sh
 ```
 
+Or via the build system:
+
+```bash
+./configure --package-target=wsl
+make install
+```
+
+On WSL, `./configure` without a target auto-selects `wsl` (like `docker` inside containers).
+
 This copies `src/bash.bashrc.d` to `~/.config/cognitify/bash.bashrc.d`, installs dotfiles into your home directory, and backs up any existing files to `.orig` once. `~/.bashrc` uses the user-local fragments when that directory exists. The prompt shows a `(WSL)` or `(WSL2)` prefix when running under WSL.
 
 ## Maintenance

@@ -59,6 +59,35 @@ ROOT_RED="${COLOUR}[38;5;196m\\]"
 OLIVE="${COLOUR}[38;5;64m\\]"
 
 ########################################
+# WSL detection
+########################################
+
+_cognitify_detect_wsl() {
+    if [[ -n "${WSL_DISTRO_NAME:-}" ]]; then
+        IS_WSL="TRUE"
+    elif [[ -r /proc/version ]] && grep -qiE 'microsoft|wsl' /proc/version; then
+        IS_WSL="TRUE"
+    else
+        IS_WSL="FALSE"
+    fi
+
+    if [[ "${IS_WSL}" == "TRUE" ]]; then
+        if grep -qi 'microsoft-standard-WSL2' /proc/version 2>/dev/null; then
+            WSL_FLAVOUR="WSL2"
+        else
+            WSL_FLAVOUR="WSL"
+        fi
+        export IS_WSL WSL_FLAVOUR
+    else
+        WSL_FLAVOUR=""
+        export IS_WSL
+    fi
+}
+
+_cognitify_detect_wsl
+unset -f _cognitify_detect_wsl
+
+########################################
 # Prompt (coloured + overrideable)
 ########################################
 
@@ -95,6 +124,13 @@ _cognitify_apply_prompt() {
     fi
 
     USER_PS1="${USER_HOSTNAME}${USER_USER}${PS_PWD}${USER_PROMPT}"
+
+    if [[ "${IS_WSL:-FALSE}" == "TRUE" ]]; then
+        local wsl_label="${WSL_FLAVOUR:-WSL}"
+        local wsl_message="${GOLD}(${wsl_label}) ${RESET}"
+        ROOT_PS1="${wsl_message}${ROOT_PS1}"
+        USER_PS1="${wsl_message}${USER_PS1}"
+    fi
 
     if [[ ${EUID:-$(id -u)} -eq 0 ]]; then
         export PS1="${ROOT_PS1}"

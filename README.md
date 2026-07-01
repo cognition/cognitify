@@ -11,6 +11,8 @@ cognitify/
 ├── .gitignore
 ├── README.md
 ├── version
+├── bin/
+│   └── install-wsl.sh              # user-local install for WSL (no Cockpit)
 ├── dist/
 │   └── cognitify-home-etc.tar.gz   # optional bundle (see below)
 └── src/
@@ -35,9 +37,29 @@ cognitify/
 | `src/home-files/vimrc`       | Vim configuration.                                                                                                     |
 
 
-**System path:** `bashrc` uses `ENVIRONMENT_FILE="/etc/environment"`. Install the repo file as that path (lowercase), or change `ENVIRONMENT_FILE` in your `~/.bashrc` if your distribution uses another file.
+**Environment path:** `bashrc` sources `~/.config/cognitify/environment` when present
+(WSL install), otherwise `/etc/environment`. Change resolution in `~/.bashrc` if your
+distribution uses another system file.
 
 ## Install
+
+### WSL (Windows Subsystem for Linux)
+
+WSL installs are **user-local** (no `sudo`) and do **not** include Cockpit or other
+system services that WSL does not support well.
+
+From the repository root:
+
+```bash
+bin/install-wsl.sh
+```
+
+This copies `src/home-files/*` into your home directory and installs the shared
+environment script to `~/.config/cognitify/environment`. `~/.bashrc` prefers that
+path over `/etc/environment`.
+
+Open a new interactive Bash session (or run `rebash`). The prompt shows a `(WSL)` or
+`(WSL2)` prefix when running under WSL.
 
 ### 1. System environment (root)
 

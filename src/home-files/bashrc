@@ -1,15 +1,28 @@
 ## (c) 2026
 ## Ramon Brooker <rbrooker@aeo3.io>
 
-ENVIRONMENT_FILE="/etc/environment"
+_cognitify_resolve_environment_file() {
+    if [[ -f "${HOME}/.config/cognitify/environment" ]]; then
+        printf '%s\n' "${HOME}/.config/cognitify/environment"
+        return 0
+    fi
+    if [[ -f "/etc/environment" ]]; then
+        printf '%s\n' "/etc/environment"
+        return 0
+    fi
+    return 1
+}
 
 case $- in
     *i*) ;;
     *) return ;;
 esac
 
+ENVIRONMENT_FILE="$(_cognitify_resolve_environment_file || true)"
+unset -f _cognitify_resolve_environment_file
+
 # shellcheck source=/dev/null
-if [[ -f "${ENVIRONMENT_FILE}" ]]; then
+if [[ -n "${ENVIRONMENT_FILE}" && -f "${ENVIRONMENT_FILE}" ]]; then
     source "${ENVIRONMENT_FILE}"
 fi
 

@@ -19,9 +19,9 @@ shopt -s cmdhist
 shopt -s checkwinsize
 shopt -s globstar
 
-BASE_PATH="/etc/bash.bashrc.d"
+BASE_PATH="${BASE_PATH:-/etc/bash.bashrc.d}"
 
-## Source all rc files in /etc/bash.bashrc.d/
+## Source all rc files in ${BASE_PATH}/
 
 if [[  -f ${BASE_PATH}/functionrc ]] ; then
    source ${BASE_PATH}/functionrc
@@ -29,6 +29,10 @@ fi
 
 if [[  -f ${BASE_PATH}/environmentrc ]] ; then
    source ${BASE_PATH}/environmentrc
+fi
+
+if [[  -f ${BASE_PATH}/wslrc ]] ; then
+   source ${BASE_PATH}/wslrc
 fi
 
 if [[  -f ${BASE_PATH}/promptrc ]] ; then

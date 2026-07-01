@@ -1,7 +1,12 @@
 ## (c) 2026
 ## Ramon Brooker <rbrooker@aeo3.io>
 
-BASE_PATH="/etc/bash.bashrc.d"
+if [[ -d "${HOME}/.config/cognitify/bash.bashrc.d" ]]; then
+    BASE_PATH="${HOME}/.config/cognitify/bash.bashrc.d"
+else
+    BASE_PATH="/etc/bash.bashrc.d"
+fi
+export BASE_PATH
 
 if [[ -f ~/.over-ride ]]; then
 	source ~/.over-ride

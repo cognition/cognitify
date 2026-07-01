@@ -9,8 +9,11 @@ Cognitify is a set of Linux shell customisations packaged for easy reuse across 
 - **Shell completions** (`src/completions`): upstream completion files for tools such as `kubectl`, `helm`, `terraform`, `nerdctl`, and more.
 - **Package manifests** (`src/packages`): general CLI and GUI package sets plus package-manager-specific add-ons for apt, yum/dnf, and zypper.
 - **Installer** (`bin/install.sh`): bootstraps packages, installs system-wide Bash configuration, copies completions, and syncs dotfiles for the chosen user.
+- **WSL installer** (`bin/install-wsl.sh`): user-local install for Windows Subsystem for Linux (no Cockpit or system packages).
 
 ## Installation
+
+### Linux (system-wide)
 
 Run the installer as root (or via `sudo`) from the repository root:
 
@@ -32,6 +35,16 @@ What the installer does:
 4. Copies dotfiles into the target user's home directory, backing up any existing files to `.orig` once.
 
 After `/etc/bash.bashrc.d` is in place, a user may rerun `make install-home` for their own account without `sudo`. Root is still required for `ALL=1` or when installing dotfiles for another user.
+
+### WSL (Windows Subsystem for Linux)
+
+WSL installs are **user-local** (no `sudo`) and do **not** include Cockpit, packages, or other system services.
+
+```bash
+bin/install-wsl.sh
+```
+
+This copies `src/bash.bashrc.d` to `~/.config/cognitify/bash.bashrc.d`, installs dotfiles into your home directory, and backs up any existing files to `.orig` once. `~/.bashrc` uses the user-local fragments when that directory exists. The prompt shows a `(WSL)` or `(WSL2)` prefix when running under WSL.
 
 ## Maintenance
 

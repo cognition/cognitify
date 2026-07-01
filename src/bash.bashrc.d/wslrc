@@ -1,0 +1,25 @@
+## (c) 2026
+## Ramon Brooker <rbrooker@aeo3.io>
+
+# WSL (Windows Subsystem for Linux) detection.
+# Sourced before promptrc so IS_WSL and WSL_FLAVOUR are available for the prompt.
+
+if [[ -n "${WSL_DISTRO_NAME:-}" ]]; then
+    IS_WSL="TRUE"
+elif [[ -r /proc/version ]] && grep -qiE 'microsoft|wsl' /proc/version; then
+    IS_WSL="TRUE"
+else
+    IS_WSL="FALSE"
+fi
+
+if [[ "${IS_WSL}" == "TRUE" ]]; then
+    if grep -qi 'microsoft-standard-WSL2' /proc/version 2>/dev/null; then
+        WSL_FLAVOUR="WSL2"
+    else
+        WSL_FLAVOUR="WSL"
+    fi
+    export IS_WSL WSL_FLAVOUR
+else
+    WSL_FLAVOUR=""
+    export IS_WSL
+fi

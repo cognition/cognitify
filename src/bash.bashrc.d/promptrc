@@ -3,7 +3,10 @@
 # shellcheck source=/dev/null
 
 # Source environment variables and color definitions
-source /etc/environment
+if [[ -f /etc/environment ]]; then
+    # shellcheck source=/dev/null
+    source /etc/environment
+fi
 # Always default to not WSL (can be overridden by /etc/environment if needed)
 IS_WSL=${IS_WSL:-FALSE}
 # Ensure IS_WSL is explicitly set to FALSE if not already set or empty
@@ -104,7 +107,7 @@ if [ "$color_prompt" = yes ]; then
         [[ $UID -eq 0 ]] && export PS1="${ROOT_PS1}" || export PS1="${USER_PS1}"
     else
         # For WSL, add WSL flavor info to the prompt
-        WSL_MESSAGE="${YELLO}(${WSL_FLAVOUR}) ${RESET}"
+        WSL_MESSAGE="${YELLOW}(${WSL_FLAVOUR}) ${RESET}"
         WSL_ROOT_PS1="${WSL_MESSAGE}${ROOT_PS1}"  # Root prompt with WSL info
         WSL_USER_PS1="${WSL_MESSAGE}${USER_PS1}"  # User prompt with WSL info
         [[ $UID -eq 0 ]] && export PS1="${WSL_ROOT_PS1}" || export PS1="${WSL_USER_PS1}"

@@ -13,9 +13,12 @@ PACKAGE_MANAGER=$(ddistro 3)
 alias alert='notify-send --urgency=low -i "$([ $? = 0 ] && echo terminal || echo error)" "$(history|tail -n1|sed -e '\''s/^\s*[0-9]\+\s*//;s/[;&|]\s*alert$//'\'')"'
 
 # Check if the current script is executed by the root user
-if [ $UID = 0 ]; then
-    # Print a warning advising against setting a password for the root account
-    alias passwd='printf "\n ${RED}${BOLD}Never${NC} create a password for ${RED}ROOT \n\n" '
+if [ "$UID" -eq 0 ]; then
+    # Print a warning advising against setting a password for the root account.
+    # Use raw ANSI escapes (not PS1 \\[ \\] wrappers); ${RED} is not defined in cognitifyColours.
+    passwd() {
+        printf '\n \033[1m\033[38;5;196mNever\033[0m create a password for \033[38;5;196mROOT \033[0m\n\n'
+    }
 fi
 
 

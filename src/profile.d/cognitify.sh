@@ -2,12 +2,16 @@
 ## Ramon Brooker <rbrooker@aeo3.io>
 ## Cognitify system-wide profile configuration
 
-# Source cognitify bashrc_file for login shells (including SSH)
-# This ensures cognitify configuration is available even for non-interactive login shells
-BASE_PATH="/etc/bash.bashrc.d"
+# Bash-only: bashrc_file uses bash syntax. /etc/profile may source this via /bin/sh
+# (e.g. su without -, dash), so skip unless the current shell is bash.
 
-if [[ -f "${BASE_PATH}/bashrc_file" ]]; then
-    # shellcheck source=/dev/null
-    source "${BASE_PATH}/bashrc_file"
+if [ -z "${BASH_VERSION:-}" ]; then
+    return 0 2>/dev/null || true
 fi
 
+BASE_PATH="/etc/bash.bashrc.d"
+
+if [ -f "${BASE_PATH}/bashrc_file" ]; then
+    # shellcheck source=/dev/null
+    . "${BASE_PATH}/bashrc_file"
+fi

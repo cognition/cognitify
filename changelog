@@ -5,3 +5,4 @@ Mon Nov 25 2026     -   Fixed Path issues
 Thu Apr 16 2026     -   Added Ansible role under ansible/roles/cognitify for install automation
 Wed Jul  1 2026     -   Added WSL user-local installer (bin/install-wsl.sh); no Cockpit on WSL
 Wed Jul  1 2026     -   Added --package-target=wsl to configure and Makefile WSL_MODE
+Wed Jul  1 2026     -   Fixed WSL prompt colour escapes; apply configure colours on WSL install

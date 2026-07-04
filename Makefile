@@ -107,12 +107,12 @@ install-system: check-root install-config install-completions install-home insta
 	@echo "$(GREEN)[cognitify]$(NC) Please log out and log back in for changes to take effect"
 
 install-wsl: all ## Install user-local WSL configuration (no root, no Cockpit)
-	@echo "$(GREEN)[cognitify]$(NC) Installing for WSL (user-local)..."
-	@./bin/install-wsl.sh --user "$(INSTALL_USER)"
-	@echo ""
-	@echo "$(GREEN)[cognitify]$(NC) WSL installation completed successfully!"
-	@echo "$(GREEN)[cognitify]$(NC) Version $(VERSION) installed for user: $(INSTALL_USER)"
-	@echo "$(GREEN)[cognitify]$(NC) Open a new interactive Bash session for changes to take effect"
+	@printf "$(GREEN)[cognitify]$(NC) Installing for WSL (user-local)...\n"
+	@HOSTNAME_COLOUR="$(HOSTNAME_COLOUR)" USERNAME_COLOUR="$(USERNAME_COLOUR)" PWD_COLOUR="$(PWD_COLOUR)" \
+		./bin/install-wsl.sh --user "$(INSTALL_USER)"
+	@printf "\n$(GREEN)[cognitify]$(NC) WSL installation completed successfully!\n"
+	@printf "$(GREEN)[cognitify]$(NC) Version $(VERSION) installed for user: $(INSTALL_USER)\n"
+	@printf "$(GREEN)[cognitify]$(NC) Open a new interactive Bash session for changes to take effect\n"
 
 install-root: ## Install for root user (alias for: make install ROOT=1)
 	$(MAKE) install ROOT=1

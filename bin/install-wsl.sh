@@ -119,6 +119,84 @@ install_home_files() {
     done
 }
 
+apply_colour_overrides() {
+    local user_home="$1"
+    local override_file="${user_home}/.over-ride"
+    local hostname_colour="${HOSTNAME_COLOUR:-}"
+    local username_colour="${USERNAME_COLOUR:-}"
+    local pwd_colour="${PWD_COLOUR:-}"
+    local temp_file
+
+    if [[ -z "${hostname_colour}" && -z "${username_colour}" && -z "${pwd_colour}" ]]; then
+        return 0
+    fi
+
+    if [[ ! -f "${override_file}" ]]; then
+        log "Warning: ${override_file} not found; skipping colour overrides"
+        return 0
+    fi
+
+    temp_file="$(mktemp)"
+    awk -v hc="${hostname_colour}" -v uc="${username_colour}" -v pc="${pwd_colour}" '
+        BEGIN {
+            hostname_set = 0
+            username_set = 0
+            pwd_set = 0
+        }
+        /^export OVERRIDE_HOSTNAME_COLOUR=/ {
+            if (hc != "") {
+                print "export OVERRIDE_HOSTNAME_COLOUR=${" hc "}"
+                hostname_set = 1
+            }
+            next
+        }
+        /^export OVERRIDE_USERNAME_COLOUR=/ {
+            if (uc != "") {
+                print "export OVERRIDE_USERNAME_COLOUR=${" uc "}"
+                username_set = 1
+            }
+            next
+        }
+        /^export OVERRIDE_PWD_COLOUR=/ {
+            if (pc != "") {
+                print "export OVERRIDE_PWD_COLOUR=${" pc "}"
+                pwd_set = 1
+            }
+            next
+        }
+        /SCRIPT_SIGNATURE_BLOCK/ {
+            if (hc != "" && !hostname_set) {
+                print "export OVERRIDE_HOSTNAME_COLOUR=${" hc "}"
+                hostname_set = 1
+            }
+            if (uc != "" && !username_set) {
+                print "export OVERRIDE_USERNAME_COLOUR=${" uc "}"
+                username_set = 1
+            }
+            if (pc != "" && !pwd_set) {
+                print "export OVERRIDE_PWD_COLOUR=${" pc "}"
+                pwd_set = 1
+            }
+            print
+            next
+        }
+        { print }
+        END {
+            if (hc != "" && !hostname_set) {
+                print "export OVERRIDE_HOSTNAME_COLOUR=${" hc "}"
+            }
+            if (uc != "" && !username_set) {
+                print "export OVERRIDE_USERNAME_COLOUR=${" uc "}"
+            }
+            if (pc != "" && !pwd_set) {
+                print "export OVERRIDE_PWD_COLOUR=${" pc "}"
+            }
+        }
+    ' "${override_file}" > "${temp_file}"
+    mv "${temp_file}" "${override_file}"
+    log "Updated colour settings in ${override_file}"
+}
+
 main() {
     parse_args "$@"
     assert_paths
@@ -131,6 +209,7 @@ main() {
     user_home="$(resolve_home)"
     install_bash_configs "${user_home}"
     install_home_files "${user_home}"
+    apply_colour_overrides "${user_home}"
 
     log "Done. Open a new interactive Bash session."
     log "Cockpit and package installation were skipped (not supported on WSL)."
